@@ -10,15 +10,31 @@ async function checkAdmin(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const err = await checkAdmin(request);
-  if (err) return err;
+  try {
+    const err = await checkAdmin(request);
+    if (err) return err;
 
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        companyName: true,
+        phone: true,
+        role: true,
+        isApproved: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
 
-  // Don't expose password hashes
-  const safe = users.map(({ passwordHash, ...rest }) => rest);
-
-  return NextResponse.json(safe, { status: 200 });
+    return NextResponse.json(users, { status: 200 });
+  } catch (error) {
+    console.error("[GET /api/admin/users] Error:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error", detail: String(error) },
+      { status: 500 }
+    );
+  }
 }
