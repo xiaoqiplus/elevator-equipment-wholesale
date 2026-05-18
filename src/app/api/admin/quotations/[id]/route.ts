@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/auth";
+import { validateCsrf } from "@/lib/auth/csrf";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,10 @@ export async function PATCH(
 ) {
   const err = await checkAdmin();
   if (err) return err;
+
+  if (!(await validateCsrf(request))) {
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
 
   let body: any;
   try {

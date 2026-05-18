@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/auth";
+import { validateCsrf } from "@/lib/auth/csrf";
 
 export const dynamic = "force-dynamic";
 
@@ -12,11 +13,15 @@ async function checkAdmin() {
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const err = await checkAdmin();
   if (err) return err;
+
+  if (!(await validateCsrf(request))) {
+    return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+  }
 
   const product = await prisma.product.findUnique({ where: { id: params.id } });
   if (!product) {
