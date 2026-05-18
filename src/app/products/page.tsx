@@ -63,7 +63,6 @@ export default async function ProductsPage(props: any = {}) {
         pageSize={pageSize}
         loading={false}
         error={fetchError}
-        onRetry={() => {}}
       />
     </div>
   );
