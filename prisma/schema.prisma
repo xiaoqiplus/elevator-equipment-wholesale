@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum DocumentType {
+  DRAWING
+  MANUAL
+  CERTIFICATE
+}
+
+enum QuotationStatus {
+  PENDING
+  RESPONDED
+  CONVERTED_TO_ORDER
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model User {
+  id            String             @id @default(cuid())
+  email         String             @unique
+  name          String?
+  companyName   String?
+  phone         String?
+  passwordHash  String?
+  role          Role               @default(CUSTOMER)
+  isApproved    Boolean            @default(false)
+  favorites     Favorite[]
+  quotations    QuotationRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  sku         String    @unique
+  name        String
+  description String?
+  price       Decimal?
+  categoryId  String?
+  brandId     String?
+  images      String[]
+  specs       Json?
+
+  category  Category?  @relation(fields: [categoryId], references: [id])
+  brand     Brand?     @relation(fields: [brandId], references: [id])
+  documents Document[]
+  favorites Favorite[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  parentId String?
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryTree")
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Brand {
+  id      String    @id @default(cuid())
+  name    String
+  slug    String    @unique
+  logoUrl String?
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Document {
+  id        String       @id @default(cuid())
+  productId String
+  type      DocumentType
+  name      String
+  fileUrl   String
+
+  product Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model QuotationRequest {
+  id         String          @id @default(cuid())
+  userId     String
+  status     QuotationStatus @default(PENDING)
+  items      Json            // [{productId, sku, name, quantity, note}]
+  adminNotes String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Favorite {
+  userId    String
+  productId String
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@id([userId, productId])
+}
