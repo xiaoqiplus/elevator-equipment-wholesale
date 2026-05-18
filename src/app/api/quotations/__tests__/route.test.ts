@@ -199,6 +199,125 @@ describe("POST /api/quotations — data integrity", () => {
     const items = saved.items as any[];
     expect(items[0].price).toBe(299.99);
   });
+
+  it("should IGNORE client price field entirely (not just override it)", async () => {
+    // Client sends extreme tampered prices — they must be completely ignored
+    const req = createMockRequest("http://localhost:3000/api/quotations", {
+      method: "POST",
+      body: JSON.stringify({
+        items: [
+          {
+            sku: productSku,
+            name: "Product With Fake Price",
+            quantity: 5,
+            price: 0.01,  // impossibly low
+          },
+        ],
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    const body = await parseResponse<{ id: string }>(res);
+
+    const saved = await (prisma as any).quotationRequest.findUnique({
+      where: { id: body.id },
+    });
+    const items = saved.items as any[];
+    // Must use real DB price (299.99), not the client's 0.01
+    expect(items[0].price).toBe(299.99);
+    expect(items[0].price).not.toBe(0.01);
+  });
+
+  it("should override ALL prices in a batch multi-item quotation", async () => {
+    // Create additional products with different prices
+    const p2 = await createTestProduct(prisma, {
+      sku: "BATCH-SKU-002",
+      name: "Batch Product B",
+      price: 150.0,
+    });
+    const p3 = await createTestProduct(prisma, {
+      sku: "BATCH-SKU-003",
+      name: "Batch Product C",
+      price: 450.0,
+    });
+
+    const req = createMockRequest("http://localhost:3000/api/quotations", {
+      method: "POST",
+      body: JSON.stringify({
+        items: [
+          { sku: productSku, name: "A", quantity: 1, price: 9999 },
+          { sku: p2.sku, name: "B", quantity: 2, price: 0.01 },
+          { sku: p3.sku, name: "C", quantity: 3, price: -100 },
+        ],
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    const body = await parseResponse<{ id: string }>(res);
+
+    const saved = await (prisma as any).quotationRequest.findUnique({
+      where: { id: body.id },
+    });
+    const items = saved.items as any[];
+
+    // EVERY item must have the real DB price, regardless of client input
+    expect(items[0].price).toBe(299.99); // overrides 9999
+    expect(items[1].price).toBe(150.0);  // overrides 0.01
+    expect(items[2].price).toBe(450.0);  // overrides -100
+
+    // Verify quantities were preserved
+    expect(items[0].quantity).toBe(1);
+    expect(items[1].quantity).toBe(2);
+    expect(items[2].quantity).toBe(3);
+  });
+
+  it("should use DB product name, not client-provided name", async () => {
+    const req = createMockRequest("http://localhost:3000/api/quotations", {
+      method: "POST",
+      body: JSON.stringify({
+        items: [
+          {
+            sku: productSku,
+            name: "THIS IS A FAKE NAME FROM ATTACKER",
+            quantity: 1,
+            price: 0,
+          },
+        ],
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    const body = await parseResponse<{ id: string }>(res);
+
+    const saved = await (prisma as any).quotationRequest.findUnique({
+      where: { id: body.id },
+    });
+    const items = saved.items as any[];
+    expect(items[0].name).toBe("Quotation API Product");
+  });
+
+  it("should use price=0 for unknown SKUs and preserve SKU verbatim", async () => {
+    const req = createMockRequest("http://localhost:3000/api/quotations", {
+      method: "POST",
+      body: JSON.stringify({
+        items: [
+          { sku: "NONEXISTENT-SKU", name: "Ghost Product", quantity: 1, price: 999 },
+        ],
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+    const body = await parseResponse<{ id: string }>(res);
+
+    const saved = await (prisma as any).quotationRequest.findUnique({
+      where: { id: body.id },
+    });
+    const items = saved.items as any[];
+    // Unknown SKU → price should be 0 (no price data available)
+    expect(items[0].price).toBe(0);
+    // SKU must be preserved verbatim so admin can investigate
+    expect(items[0].sku).toBe("NONEXISTENT-SKU");
+  });
 });
 
 describe("POST /api/quotations — email notification", () => {

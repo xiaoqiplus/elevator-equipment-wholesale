@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { notifyNewQuotation } from "@/lib/email/notifyQuotation";
 import { getSessionFromRequest } from "@/lib/auth/utils";
 
+export const dynamic = "force-dynamic";
+
 // ─── POST /api/quotations  ─────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
@@ -37,19 +39,24 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Look up server-side prices
+  // Look up server-side prices AND names from database.
+  // Client-supplied price and name MUST be ignored and replaced
+  // with authoritative server values.
   const skus = items.map((item: any) => item.sku);
   const dbProducts = await prisma.product.findMany({
     where: { sku: { in: skus } },
   });
-  const priceMap = new Map(dbProducts.map((p) => [p.sku, p.price]));
+  const productMap = new Map(dbProducts.map((p) => [p.sku, p]));
 
-  const itemsSnapshot = items.map((item: any) => ({
-    sku: item.sku,
-    name: item.name ?? "",
-    quantity: item.quantity,
-    price: Number(priceMap.get(item.sku) ?? 0),
-  }));
+  const itemsSnapshot = items.map((item: any) => {
+    const dbProduct = productMap.get(item.sku);
+    return {
+      sku: item.sku,
+      name: dbProduct?.name ?? (item.name || item.sku),
+      quantity: item.quantity,
+      price: Number(dbProduct?.price ?? 0),
+    };
+  });
 
   const quotation = await prisma.quotationRequest.create({
     data: {
