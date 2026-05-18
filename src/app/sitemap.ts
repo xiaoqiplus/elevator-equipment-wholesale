@@ -1,4 +1,5 @@
 import { MetadataRoute } from "next";
+import { prisma } from "@/lib/prisma";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://elevatorequipment.vercel.app";
 
@@ -36,23 +37,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Fetch product SKUs from the API for dynamic product pages
+  // Fetch product SKUs from the database directly
   let productPages: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/products?pageSize=100`,
-      { cache: "no-store" }
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const products = data.products ?? [];
-      productPages = products.map((product: any) => ({
-        url: `${BASE_URL}/products/${product.sku}`,
-        lastModified: new Date(product.updatedAt ?? Date.now()),
-        changeFrequency: "weekly" as const,
-        priority: 0.7,
-      }));
-    }
+    const products = await prisma.product.findMany({
+      select: { sku: true, updatedAt: true },
+      take: 100,
+    });
+    productPages = products.map((product) => ({
+      url: `${BASE_URL}/products/${product.sku}`,
+      lastModified: product.updatedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
   } catch {
     // product pages omitted on error
   }
