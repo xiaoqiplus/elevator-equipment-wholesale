@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import ProductList from "@/components/products/ProductList";
 import ProductFilters from "@/components/products/ProductFilters";
 
@@ -9,31 +11,41 @@ export default async function ProductsPage(props: any = {}) {
   const category = searchParams.category ?? "";
   const brand = searchParams.brand ?? "";
   const pageSize = 10;
+  const skip = (page - 1) * pageSize;
 
   let products: any[] = [];
   let total = 0;
   let fetchError: string | null = null;
 
   try {
-    const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("pageSize", String(pageSize));
-    if (search) params.set("search", search);
-    if (category) params.set("category", category);
-    if (brand) params.set("brand", brand);
+    const where: Prisma.ProductWhereInput = {};
 
-    const res = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"
-      }/api/products?${params.toString()}`,
-      { cache: "no-store" }
-    );
+    if (category) {
+      where.category = { slug: category };
+    }
+    if (brand) {
+      where.brand = { slug: brand };
+    }
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { sku: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const [results, count] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        skip,
+        take: pageSize,
+        include: { category: true, brand: true, documents: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.product.count({ where }),
+    ]);
 
-    const data = await res.json();
-    products = data.products ?? [];
-    total = data.total ?? 0;
+    products = results.map((p) => ({ ...p, price: null }));
+    total = count;
   } catch (err) {
     fetchError = err instanceof Error ? err.message : "获取产品列表失败";
   }
