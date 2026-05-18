@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/auth/password";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -18,10 +19,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) return null;
 
+        // ── Rate limit by email ────────────────────────────────────────────
         const email = credentials.email as string;
+        const rateCheck = await checkRateLimit(`login:${email}`);
+        if (!rateCheck.success) {
+          throw new Error("登录尝试过多，请稍后再试");
+        }
+
         const password = credentials.password as string;
 
         const user = await prisma.user.findFirst({
@@ -37,7 +44,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
-          // Custom fields attached via the `jwt` and `session` callbacks
         };
       },
     }),
