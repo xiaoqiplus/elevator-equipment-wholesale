@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { approveUser } from "@/lib/db/user";
+import { auth } from "@/lib/auth/auth";
+
+export const dynamic = "force-dynamic";
 
 /**
  * PATCH /api/admin/users/[id]/approve
  *
  * Admin-only endpoint to approve a pending customer registration.
- * Uses the same getServerSession pattern as the quotations route.
  */
 export async function PATCH(
   _request: NextRequest,
@@ -14,26 +16,11 @@ export async function PATCH(
 ) {
   const { id } = params;
 
-  // Get session using the same dynamic import pattern
-  let session: any = null;
-  try {
-    const mod = await import("next-auth");
-    const fn = (mod as any).default;
-    session = typeof fn === "function" ? fn() : null;
-  } catch {
-    // not authenticated
-  }
-
+  const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  // Find the current user to check admin role
-  const currentUser = await prisma.user.findFirst({
-    where: { email: { equals: session.user.email, mode: "insensitive" } },
-  });
-
-  if (!currentUser || currentUser.role !== "ADMIN") {
+  if ((session.user as any).role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

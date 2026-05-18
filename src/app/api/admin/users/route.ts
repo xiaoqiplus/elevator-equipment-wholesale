@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/auth/utils";
+import { auth } from "@/lib/auth/auth";
 
-async function checkAdmin(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if ((session as any).role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export const dynamic = "force-dynamic";
+
+async function checkAdmin() {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if ((session.user as any).role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   return null;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const err = await checkAdmin(request);
+    const err = await checkAdmin();
     if (err) return err;
 
     const users = await prisma.user.findMany({
