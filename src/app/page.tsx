@@ -1,37 +1,24 @@
 import Link from "next/link";
-import { Search, ArrowRight, Building2, Cable, Wrench, Gauge } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { Search, ArrowRight, Package, Cable, Wrench, Gauge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-const categories = [
-  {
-    title: "Door Systems",
-    description: "Door operators, panels, locks, and sensors",
-    icon: Building2,
-    href: "/categories/door-systems",
-  },
-  {
-    title: "Electrical Components",
-    description: "Controllers, boards, displays, and wiring",
-    icon: Cable,
-    href: "/categories/electrical-components",
-  },
-  {
-    title: "Mechanical Parts",
-    description: "Guide rails, bearings, ropes, and pulleys",
-    icon: Gauge,
-    href: "/categories/mechanical-parts",
-  },
-  {
-    title: "Maintenance Tools",
-    description: "Inspection kits, lubricants, and specialized tools",
-    icon: Wrench,
-    href: "/categories/maintenance-tools",
-  },
-];
+const iconMap: Record<string, typeof Package> = {
+  Package,
+  Cable,
+  Wrench,
+  Gauge,
+};
 
-export default function Home() {
+const defaultIcons = [Package, Cable, Wrench, Gauge];
+
+export default async function Home() {
+  const categories = await prisma.category.findMany({
+    orderBy: { name: "asc" },
+  });
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -52,7 +39,6 @@ export default function Home() {
               delivery available on thousands of parts.
             </p>
 
-            {/* Search Bar */}
             <div className="mx-auto mb-8 max-w-2xl">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -93,26 +79,36 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {categories.map((category) => (
-              <Link key={category.title} href={category.href} className="group">
-                <Card className="h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                  <CardHeader>
-                    <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <category.icon className="h-6 w-6" />
-                    </div>
-                    <CardTitle className="text-lg">{category.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {category.description}
-                    </p>
-                    <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                      Browse Category <ArrowRight className="ml-1 h-3 w-3" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+            {categories.map((category, index) => {
+              const Icon = defaultIcons[index % defaultIcons.length];
+              return (
+                <Link
+                  key={category.id}
+                  href={`/categories/${category.slug}`}
+                  className="group"
+                >
+                  <Card className="h-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <CardHeader>
+                      <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <CardTitle className="text-lg">
+                        {category.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Browse our {category.name.toLowerCase()} collection
+                      </p>
+                      <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                        Browse Category{" "}
+                        <ArrowRight className="ml-1 h-3 w-3" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
