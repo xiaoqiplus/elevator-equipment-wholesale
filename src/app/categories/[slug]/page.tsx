@@ -36,7 +36,16 @@ export default async function CategoryDetailPage({
       <h1 className="mb-8 text-3xl font-bold tracking-tight">{category.name}</h1>
 
       <ProductList
-        products={products.map((p) => ({ ...p, price: null }))}
+        products={products.map((p) => ({
+          sku: p.sku,
+          name: p.name,
+          description: p.description ?? undefined,
+          price: null,
+          images: p.images,
+          specs: p.specs as Record<string, unknown> | null,
+          category: p.category ? { name: p.category.name, slug: p.category.slug } : null,
+          brand: p.brand ? { name: p.brand.name, slug: p.brand.slug } : null,
+        }))}
         total={products.length}
         page={1}
         pageSize={100}

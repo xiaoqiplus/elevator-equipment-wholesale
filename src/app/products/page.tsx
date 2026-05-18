@@ -44,7 +44,16 @@ export default async function ProductsPage(props: any = {}) {
       prisma.product.count({ where }),
     ]);
 
-    products = results.map((p) => ({ ...p, price: null }));
+    products = results.map((p) => ({
+        sku: p.sku,
+        name: p.name,
+        description: p.description ?? undefined,
+        price: null,
+        images: p.images,
+        specs: p.specs as Record<string, unknown> | null,
+        category: p.category ? { name: p.category.name, slug: p.category.slug } : null,
+        brand: p.brand ? { name: p.brand.name, slug: p.brand.slug } : null,
+      }));
     total = count;
   } catch (err) {
     fetchError = err instanceof Error ? err.message : "获取产品列表失败";
