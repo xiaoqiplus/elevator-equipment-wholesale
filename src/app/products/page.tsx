@@ -3,6 +3,9 @@ import { Prisma } from "@prisma/client";
 import ProductList from "@/components/products/ProductList";
 import ProductFilters from "@/components/products/ProductFilters";
 
+// ISR: re-generate every 60 seconds if there's traffic
+export const revalidate = 60;
+
 export default async function ProductsPage(props: any = {}) {
   const { searchParams = {} } = props ?? {};
 
@@ -33,27 +36,37 @@ export default async function ProductsPage(props: any = {}) {
       ];
     }
 
+    // Only fetch fields we need for the list view — skip documents & full specs
     const [results, count] = await Promise.all([
       prisma.product.findMany({
         where,
         skip,
         take: pageSize,
-        include: { category: true, brand: true, documents: true },
+        select: {
+          sku: true,
+          name: true,
+          description: true,
+          price: true,
+          images: true,
+          specs: true,
+          category: { select: { name: true, slug: true } },
+          brand: { select: { name: true, slug: true } },
+        },
         orderBy: { createdAt: "desc" },
       }),
       prisma.product.count({ where }),
     ]);
 
     products = results.map((p) => ({
-        sku: p.sku,
-        name: p.name,
-        description: p.description ?? undefined,
-        price: null,
-        images: p.images,
-        specs: p.specs as Record<string, unknown> | null,
-        category: p.category ? { name: p.category.name, slug: p.category.slug } : null,
-        brand: p.brand ? { name: p.brand.name, slug: p.brand.slug } : null,
-      }));
+      sku: p.sku,
+      name: p.name,
+      description: p.description ?? undefined,
+      price: null,
+      images: p.images,
+      specs: p.specs as Record<string, unknown> | null,
+      category: p.category ? { name: p.category.name, slug: p.category.slug } : null,
+      brand: p.brand ? { name: p.brand.name, slug: p.brand.slug } : null,
+    }));
     total = count;
   } catch (err) {
     fetchError = err instanceof Error ? err.message : "获取产品列表失败";

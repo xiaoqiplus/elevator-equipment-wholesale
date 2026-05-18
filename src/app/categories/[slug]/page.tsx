@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+
+export const revalidate = 60;
 import ProductList from "@/components/products/ProductList";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -19,7 +21,16 @@ export default async function CategoryDetailPage({
 
   const products = await prisma.product.findMany({
     where: { categoryId: category.id },
-    include: { category: true, brand: true, documents: true },
+    select: {
+      sku: true,
+      name: true,
+      description: true,
+      price: true,
+      images: true,
+      specs: true,
+      category: { select: { name: true, slug: true } },
+      brand: { select: { name: true, slug: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 

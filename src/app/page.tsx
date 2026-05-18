@@ -1,3 +1,5 @@
+export const revalidate = 300;
+
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Search, ArrowRight, Package, Cable, Wrench, Gauge } from "lucide-react";
