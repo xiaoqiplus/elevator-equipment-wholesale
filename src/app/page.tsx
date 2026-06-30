@@ -1,86 +1,139 @@
+"""首页：Gentinf 风格复制"""
+import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Package, Cable, Wrench, Gauge, Shield } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, CheckCircle, Star, Building2, Truck, HeadphonesIcon, ShieldCheck } from "lucide-react";
 
-const fallbackIcons = [Package, Cable, Wrench, Gauge, Shield];
+export const metadata: Metadata = { title: "QuickEasy Lift Parts - Elevator Parts Supplier" };
+
+// 固定热门产品 SKU（优先展示
+const HOT_SKUS = ["ELE-DR-001", "ELE-CT-002", "ELE-CB-003", "ELE-SF-001", "ELE-TR-001", "ELE-DR-002"];
+
+async function getHotProducts() {
+  const hot: any[] = [];
+  for (const sku of HOT_SKUS) {
+    const p = await prisma.product.findUnique({ where: { sku }, include: { category: true, brand: true } });
+    if (p) hot.push(p);
+  }
+  return hot;
+}
 
 export default async function Home() {
-  const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" },
-  });
+  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const hotProducts = await getHotProducts();
 
   return (
     <div>
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-slate-50 via-white to-slate-100 py-20 md:py-28">
-        <div className="container mx-auto px-4 text-center">
-          <p className="mb-2 text-sm uppercase tracking-widest text-slate-400">
-            Quick Delivery · Easy Service · Zero Downtime
-          </p>
-          <h1 className="mb-4 text-3xl font-bold tracking-tight text-slate-800 md:text-5xl">
-            QuickEasy Lift Parts
-          </h1>
-          <p className="mx-auto mb-6 max-w-2xl text-base text-slate-500 md:text-lg">
-            专业电梯零部件供应商，为您提供高品质的门系统、控制系统、曳引系统、线缆线束、安全部件等全系列电梯配件。
+      {/* ── Hero Banner ── */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-24 md:py-32">
+        <div className="container relative z-10 mx-auto px-4 text-center">
+          <h1 className="mb-4 text-4xl font-bold text-white md:text-6xl">QuickEasy Lift Parts</h1>
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-slate-300">
+            Quick Delivery. Easy Service. Zero Downtime.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link
-              href="/products"
-              className="rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-medium text-white hover:bg-slate-700 transition-colors"
-            >
-              浏览产品
-            </Link>
-            <Link
-              href="/contact"
-              className="rounded-lg border border-slate-200 px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              联系我们
-            </Link>
+            <Button size="lg" asChild className="bg-white text-slate-900 hover:bg-slate-100">
+              <Link href="/products">View Products</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10">
+              <Link href="/contact">Contact Us</Link>
+            </Button>
           </div>
         </div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem]" />
       </section>
 
-      {/* Categories */}
-      <section className="py-16">
+      {/* ── Why Choose Us ── */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="mb-2 text-center text-2xl font-bold text-slate-800">产品分类</h2>
-          <p className="mb-10 text-center text-sm text-slate-400">
-            覆盖电梯各大系统零部件
-          </p>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-            {categories.map((cat, i) => {
-              const Icon = fallbackIcons[i % fallbackIcons.length];
-              return (
-                <Link key={cat.id} href={`/categories/${cat.slug}`}>
-                  <Card className="h-full transition-all hover:shadow-md hover:-translate-y-0.5">
-                    <CardHeader className="pb-2 pt-4">
-                      <Icon className="mx-auto h-8 w-8 text-slate-400" />
-                    </CardHeader>
-                    <CardContent className="pb-4 pt-0 text-center">
-                      <CardTitle className="text-sm font-medium text-slate-700">{cat.name}</CardTitle>
-                    </CardContent>
-                  </Card>
-                </Link>
-              );
-            })}
+          <h2 className="mb-2 text-center text-2xl font-bold text-slate-800">Why Customers Choose Us</h2>
+          <p className="mb-12 text-center text-sm text-slate-400">What Makes QuickEasy Lift Parts Different</p>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { icon: Truck, title: "Fast Delivery", desc: "Quick dispatch and reliable shipping worldwide. Most orders ship within 24 hours." },
+              { icon: ShieldCheck, title: "Quality Guaranteed", desc: "All parts sourced from certified manufacturers. Strict quality control at every step." },
+              { icon: HeadphonesIcon, title: "Expert Support", desc: "Technical team with decades of elevator industry experience. We speak your language." },
+              { icon: Building2, title: "Complete Inventory", desc: "Extensive stock of elevator parts for all major brands — Otis, Kone, Schindler, Mitsubishi & more." },
+            ].map((item, i) => (
+              <Card key={i} className="border-0 bg-slate-50 p-6 text-center shadow-sm">
+                <item.icon className="mx-auto mb-4 h-10 w-10 text-slate-600" />
+                <h3 className="mb-2 font-semibold text-slate-800">{item.title}</h3>
+                <p className="text-sm text-slate-500">{item.desc}</p>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Contact CTA */}
-      <section className="bg-slate-800 py-14">
+      {/* ── Hot Products ── */}
+      <section className="bg-slate-50 py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="mb-2 text-center text-2xl font-bold text-slate-800">Hot Products</h2>
+          <p className="mb-12 text-center text-sm text-slate-400">Most Popular Elevator Parts</p>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {hotProducts.map((p) => (
+              <Link key={p.sku} href={`/products/${p.sku}`}>
+                <Card className="h-full transition-all hover:shadow-md hover:-translate-y-1">
+                  <CardContent className="p-5">
+                    <Badge variant="secondary" className="mb-2 font-mono text-xs">{p.sku}</Badge>
+                    <h3 className="mb-1 font-semibold text-slate-800">{p.name}</h3>
+                    {p.description && <p className="mb-3 text-sm text-slate-500 line-clamp-2">{p.description}</p>}
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      {p.category && <span>{p.category.name}</span>}
+                      {p.brand && <span>{p.brand.name}</span>}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Button variant="outline" asChild>
+              <Link href="/products">View All Products <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Categories ── */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="mb-2 text-center text-2xl font-bold text-slate-800">Product Categories</h2>
+          <p className="mb-12 text-center text-sm text-slate-400">Browse by Category</p>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {categories.map((cat) => (
+              <Link key={cat.id} href={`/categories/${cat.slug}`}>
+                <Card className="h-full text-center transition-all hover:shadow-md hover:-translate-y-0.5">
+                  <CardContent className="p-4">
+                    <p className="text-sm font-medium text-slate-700">{cat.name}</p>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Contact CTA ── */}
+      <section className="bg-slate-900 py-16">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="mb-3 text-xl font-bold text-white md:text-2xl">
-            需要电梯配件？
-          </h2>
-          <p className="mb-6 text-sm text-slate-300">
-            欢迎随时联系我们获取产品信息和报价
-          </p>
-          <div className="flex flex-col items-center gap-2 text-sm text-slate-300">
-            <p>📞 电话：138-xxxx-xxxx</p>
-            <p>💬 微信：xx-elevator-parts</p>
-            <p>📧 邮箱：info@xx-elevator.com</p>
+          <h2 className="mb-3 text-2xl font-bold text-white">Need Elevator Parts?</h2>
+          <p className="mb-8 text-slate-300">Contact us for inquiries, quotes, or technical support</p>
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <a href="mailto:info@quickeasyliftparts.com" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+              <span className="text-lg">📧</span> info@quickeasyliftparts.com
+            </a>
+            <span className="hidden text-slate-600 md:inline">|</span>
+            <a href="tel:+86138xxxxxxx" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+              <span className="text-lg">📞</span> +86 138-xxxx-xxxx
+            </a>
+            <span className="hidden text-slate-600 md:inline">|</span>
+            <a href="https://wa.me/86138xxxxxxx" target="_blank" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+              <span className="text-lg">💬</span> WhatsApp
+            </a>
           </div>
         </div>
       </section>
