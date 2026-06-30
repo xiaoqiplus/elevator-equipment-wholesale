@@ -12,7 +12,12 @@
     "test:run": "vitest run"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["prisma", "@prisma/client", "@prisma/engines", "esbuild"]
+    "onlyBuiltDependencies": [
+      "prisma",
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild"
+    ]
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -20,6 +25,7 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "aos": "^2.3.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
@@ -27,6 +33,7 @@
     "prisma": "^5.22.0",
     "react": "^18",
     "react-dom": "^18",
+    "swiper": "^14.0.0",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7"
   },
@@ -34,6 +41,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/aos": "^3.0.8",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^18",

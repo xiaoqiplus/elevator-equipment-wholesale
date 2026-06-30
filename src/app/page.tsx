@@ -3,13 +3,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Package, Cable, Wrench, Gauge, Shield } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import HeroCarousel from "@/components/HeroCarousel";
 
 export const metadata: Metadata = { title: "QuickEasy Lift Parts - Elevator Parts Supplier" };
-
-const icons = [Package, Cable, Wrench, Gauge, Shield];
 
 const HOT_SKUS = ["EL-SIE-001", "EL-SIE-002", "LFT-OTI-001", "LFT-OTI-002", "LFT-OTI-004", "EL-SIE-005"];
 
@@ -23,28 +22,11 @@ export default async function Home() {
 
   return (
     <div>
-      {/* ── Hero Banner ── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 py-28 md:py-36">
-        <div className="container relative z-10 mx-auto px-4 text-center">
-          <p className="mb-2 text-sm uppercase tracking-[0.2em] text-slate-400">Quick Delivery · Easy Service · Zero Downtime</p>
-          <h1 className="mb-4 text-4xl font-bold text-white md:text-6xl">QuickEasy Lift Parts</h1>
-          <p className="mx-auto mb-10 max-w-2xl text-base text-slate-300 md:text-lg">
-            Professional elevator parts supplier — Door Systems, Control Systems, Traction Systems, Cables, Safety Components, and more.
-          </p>
-          <div className="flex items-center justify-center gap-4">
-            <Button size="lg" asChild className="bg-white text-slate-900 hover:bg-slate-100 px-8">
-              <Link href="/products">View Products</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 px-8">
-              <Link href="/contact">Contact Us</Link>
-            </Button>
-          </div>
-        </div>
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-      </section>
+      {/* ── Hero Carousel ── */}
+      <HeroCarousel />
 
       {/* ── Why Choose Us ── */}
-      <section className="py-20">
+      <section className="py-20" data-aos="fade-up">
         <div className="container mx-auto px-4">
           <h2 className="mb-2 text-center text-2xl font-bold text-slate-800">Why Customers Choose Us</h2>
           <p className="mb-12 text-center text-sm text-slate-400">What Makes QuickEasy Lift Parts Different</p>
@@ -66,7 +48,7 @@ export default async function Home() {
       </section>
 
       {/* ── Hot Products ── */}
-      <section className="bg-slate-50 py-20">
+      <section className="bg-slate-50 py-20" data-aos="fade-up">
         <div className="container mx-auto px-4">
           <div className="mb-12 flex items-center justify-between">
             <div>

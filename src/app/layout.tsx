@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import AOSProvider from "@/components/AOSProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,9 +41,11 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={`${inter.className} flex min-h-screen flex-col`}>
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <AOSProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </AOSProvider>
       </body>
     </html>
   );
