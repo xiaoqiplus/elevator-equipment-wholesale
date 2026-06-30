@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid gap-8 md:grid-cols-4">
           {/* Company */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-white">QuickEasy Lift Parts</h3>
+            <h3 className="mb-4 text-sm font-semibold text-white">QuickEase Lift Parts</h3>
             <p className="mb-4 text-sm leading-relaxed">
               Professional elevator parts supplier. Quick Delivery. Easy Service. Zero Downtime.
             </p>
@@ -56,7 +56,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} QuickEasy Lift Parts. All Rights Reserved.
+        © {new Date().getFullYear()} QuickEase Lift Parts. All Rights Reserved.
       </div>
     </footer>
   );

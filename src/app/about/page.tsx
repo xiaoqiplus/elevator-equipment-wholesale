@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "About Us", description: "About QuickEasy Lift Parts" };
+export const metadata: Metadata = { title: "About Us", description: "About QuickEase Lift Parts" };
 
 export default function AboutPage() {
   return (
@@ -8,15 +8,15 @@ export default function AboutPage() {
       {/* Banner */}
       <section className="bg-slate-800 py-16 text-center text-white">
         <h1 className="text-3xl font-bold md:text-4xl">About Us</h1>
-        <p className="mt-2 text-slate-300">QuickEasy Lift Parts — Your Trusted Elevator Parts Partner</p>
+        <p className="mt-2 text-slate-300">QuickEase Lift Parts — Your Trusted Elevator Parts Partner</p>
       </section>
 
       <section className="container mx-auto px-4 py-16">
         <div className="mx-auto max-w-4xl">
-          <h2 className="mb-6 text-2xl font-bold text-slate-800">QuickEasy Lift Parts</h2>
+          <h2 className="mb-6 text-2xl font-bold text-slate-800">QuickEase Lift Parts</h2>
           <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
             <p>
-              QuickEasy Lift Parts is a professional elevator parts supplier dedicated to providing high-quality components
+              QuickEase Lift Parts is a professional elevator parts supplier dedicated to providing high-quality components
               for elevator maintenance companies, installation contractors, and elevator manufacturers worldwide.
             </p>
             <p>

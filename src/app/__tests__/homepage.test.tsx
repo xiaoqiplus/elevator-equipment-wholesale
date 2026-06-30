@@ -17,45 +17,39 @@ describe("🏠 首页", () => {
 describe("🧭 导航栏 Header", () => {
   it("应显示公司名称", () => {
     render(<Header />);
-    expect(screen.getByText(/QuickEasy/)).toBeInTheDocument();
+    expect(screen.getByText(/QuickEase/)).toBeInTheDocument();
   });
 
-  it("应包含产品中心链接", () => {
+  it("应包含产品链接", () => {
     render(<Header />);
-    expect(screen.getByText("产品中心")).toBeInTheDocument();
+    expect(screen.getByText("Products")).toBeInTheDocument();
   });
 
-  it("应包含关于我们链接", () => {
+  it("应包含关于链接", () => {
     render(<Header />);
-    expect(screen.getByText("关于我们")).toBeInTheDocument();
+    expect(screen.getByText("About Us")).toBeInTheDocument();
   });
 
-  it("应包含联系我们链接", () => {
+  it("应包含联系链接", () => {
     render(<Header />);
-    expect(screen.getByText("联系我们")).toBeInTheDocument();
+    expect(screen.getByText("Contact Us")).toBeInTheDocument();
   });
 
-  it("不应包含登录链接", () => {
+  it("应包含 Knowledge 链接", () => {
     render(<Header />);
-    expect(screen.queryByText("登录")).not.toBeInTheDocument();
-  });
-
-  it("不应包含注册链接", () => {
-    render(<Header />);
-    expect(screen.queryByText("注册")).not.toBeInTheDocument();
+    expect(screen.getByText("Knowledge")).toBeInTheDocument();
   });
 });
 
 describe("📞 页脚 Footer", () => {
   it("应显示联系方式", () => {
     render(<Footer />);
-    expect(screen.getByText(/电话/)).toBeInTheDocument();
-    expect(screen.getByText(/邮箱/)).toBeInTheDocument();
-    expect(screen.getByText(/微信/)).toBeInTheDocument();
+    expect(screen.getByText(/@quickeasylift/)).toBeInTheDocument();
+    expect(screen.getByText(/WhatsApp/)).toBeInTheDocument();
   });
 
-  it("应包含产品中心链接", () => {
+  it("应包含产品链接", () => {
     render(<Footer />);
-    expect(screen.getByText("产品中心")).toBeInTheDocument();
+    expect(screen.getByText("Products")).toBeInTheDocument();
   });
 });

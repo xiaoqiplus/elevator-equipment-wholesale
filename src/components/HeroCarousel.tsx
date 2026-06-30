@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 const slides = [
   {
-    title: "QuickEasy Lift Parts",
+    title: "QuickEase Lift Parts",
     subtitle: "Quick Delivery · Easy Service · Zero Downtime",
     desc: "Professional elevator parts supplier — Door Systems, Control Systems, Traction Systems, and more.",
   },

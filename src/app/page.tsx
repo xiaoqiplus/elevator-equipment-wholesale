@@ -8,17 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
 
-export const metadata: Metadata = { title: "QuickEasy Lift Parts - Elevator Parts Supplier" };
+export const metadata: Metadata = { title: "QuickEase Lift Parts - Elevator Parts Supplier" };
 
-const HOT_SKUS = ["EL-SIE-001", "EL-SIE-002", "LFT-OTI-001", "LFT-OTI-002", "LFT-OTI-004", "EL-SIE-005"];
+const HOT_SKUS = ["GENT-MONARCH-EL", "GENT-KONE-ELEVA", "GENT-OTIS-ELEVA", "GENT-WECO-ELEVA", "GENT-ELEVATOR-M", "GENT-SEMPERIT-E"];
 
 export default async function Home() {
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await prisma.category.findMany({
+    include: { products: { take: 1, select: { images: true }, orderBy: { name: "asc" } } },
+    orderBy: { name: "asc" },
+  });
   const hotProducts: any[] = [];
   for (const sku of HOT_SKUS) {
     const p = await prisma.product.findUnique({ where: { sku }, include: { category: true, brand: true } });
     if (p) hotProducts.push(p);
   }
+  const knowledgeArticles = await prisma.knowledge.findMany({ orderBy: { createdAt: "desc" }, take: 4 });
 
   return (
     <div>
@@ -29,7 +33,7 @@ export default async function Home() {
       <section className="py-20" data-aos="fade-up">
         <div className="container mx-auto px-4">
           <h4 className="mb-2 text-center text-2xl font-bold text-slate-800">Why Customers Choose Us</h4>
-          <p className="mb-14 text-center text-sm text-slate-400">What Makes QuickEasy Lift Parts Different</p>
+          <p className="mb-14 text-center text-sm text-slate-400">What Makes QuickEase Lift Parts Different</p>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {[
               { title: "Strong Team", icon: "🚚", desc: "Years of experience in elevator industry. Professional team with deep technical knowledge." },
@@ -52,9 +56,9 @@ export default async function Home() {
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div className="space-y-4">
-              <h4 className="text-2xl font-bold text-slate-800">QuickEasy Lift Parts Inc.</h4>
+              <h4 className="text-2xl font-bold text-slate-800">QuickEase Lift Parts Inc.</h4>
               <p className="text-sm text-slate-500 leading-relaxed">
-                QuickEasy Lift Parts Inc., located in China, is a professional elevator parts supplier. 
+                QuickEase Lift Parts Inc., located in China, is a professional elevator parts supplier. 
                 We specialize in providing high-quality elevator components for all major brands including 
                 Otis, Kone, Schindler, Mitsubishi, ThyssenKrupp, and more.
               </p>
@@ -91,7 +95,13 @@ export default async function Home() {
             {hotProducts.map((p) => (
               <Link key={p.sku} href={`/products/${p.sku}`}>
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
-                  <div className="flex aspect-square items-center justify-center bg-white text-5xl text-slate-200">🔧</div>
+                  <div className="aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
+                    {p.images && p.images[0] ? (
+                      <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-5xl text-slate-200">🔧</span>
+                    )}
+                  </div>
                   <CardContent className="p-5">
                     <Badge variant="secondary" className="mb-2 font-mono text-xs">{p.sku}</Badge>
                     <h3 className="mb-1 font-semibold text-slate-800 line-clamp-2">{p.name}</h3>
@@ -116,8 +126,16 @@ export default async function Home() {
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
             {categories.map((cat, i) => (
               <Link key={cat.id} href={`/categories/${cat.slug}`}>
-                <Card className="h-full text-center transition-all hover:shadow-md hover:-translate-y-0.5">
-                  <CardContent className="p-4">
+                <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5">
+                  <div className="aspect-video bg-slate-100 overflow-hidden">
+                    {cat.products[0]?.images?.[0] ? (
+                      <img src={cat.products[0].images[0]} alt={cat.name}
+                        className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-2xl text-slate-300">📦</div>
+                    )}
+                  </div>
+                  <CardContent className="p-3 text-center">
                     <p className="text-sm font-medium text-slate-700">{cat.name}</p>
                   </CardContent>
                 </Card>
@@ -136,23 +154,23 @@ export default async function Home() {
               <p className="text-sm text-slate-400">Knowledges</p>
             </div>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/contact">View All <ArrowRight className="ml-1 h-4 w-4" /></Link>
+              <Link href="/knowledge">View All <ArrowRight className="ml-1 h-4 w-4" /></Link>
             </Button>
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {[
-              { title: "How to Choose the Right Elevator Door Operator", date: "Jun 24, 2026", text: "A comprehensive guide to selecting elevator door operators based on your building's traffic patterns and elevator specifications." },
-              { title: "Understanding Elevator Inverter Specifications", date: "Jun 18, 2026", text: "Key parameters to consider when selecting an elevator inverter: voltage rating, power output, and compatibility with existing systems." },
-              { title: "Common Elevator PCB Board Failures and Solutions", date: "Jun 10, 2026", text: "Troubleshooting guide for common elevator control board issues. Learn to diagnose and resolve faults quickly." },
-              { title: "Elevator Safety Components: Maintenance Schedule Guide", date: "Jun 2, 2026", text: "Recommended inspection and replacement intervals for elevator safety gears, governors, buffers, and tension devices." },
-            ].map((post, i) => (
-              <Link key={i} href="/contact" className="group">
-                <div className="mb-3 aspect-video rounded-lg bg-slate-200 flex items-center justify-center text-slate-300 text-2xl">
-                  📋
+            {knowledgeArticles.map((post) => (
+              <Link key={post.id} href={`/knowledge/${post.id}`} className="group">
+                <div className="mb-3 aspect-video rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
+                  {post.images ? (
+                    <img src={post.images.split(",")[0]} alt={post.title}
+                      className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl text-slate-300">📋</span>
+                  )}
                 </div>
-                <p className="mb-1 text-xs text-slate-400">{post.date}</p>
+                <p className="mb-1 text-xs text-slate-400">{new Date(post.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                 <h3 className="mb-1 text-sm font-semibold text-slate-800 line-clamp-2 group-hover:text-slate-600 transition-colors">{post.title}</h3>
-                <p className="text-xs text-slate-500 line-clamp-2">{post.text}</p>
+                <p className="text-xs text-slate-500 line-clamp-2">{post.summary || post.content?.slice(0, 150)}</p>
               </Link>
             ))}
           </div>

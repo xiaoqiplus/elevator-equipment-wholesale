@@ -7,6 +7,7 @@ import { Menu, X, Phone, Mail, ChevronDown } from "lucide-react";
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Products" },
+  { href: "/knowledge", label: "Knowledge" },
   { href: "/about", label: "About Us" },
   { href: "/contact", label: "Contact Us" },
 ];
@@ -36,8 +37,8 @@ export default function Header() {
       {/* Main nav */}
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.png" alt="QuickEasy Lift Parts" className="h-9 w-auto" />
-          <span className="text-lg font-bold tracking-tight text-slate-800">QuickEasy<br />Lift Parts</span>
+          <img src="/logo.png" alt="QuickEase Lift Parts" className="h-9 w-auto" />
+          <span className="text-lg font-bold tracking-tight text-slate-800">QuickEase<br />Lift Parts</span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import ProductGallery from "@/components/ProductGallery";
 import type { Metadata } from "next";
 
 interface Props { params: { sku: string } }
@@ -47,24 +48,7 @@ export default async function ProductDetailPage({ params }: Props) {
       <section className="container mx-auto px-4 py-10">
         <div className="grid gap-10 lg:grid-cols-2">
           {/* ── Left: Images ── */}
-          <div>
-            <div className="mb-4 overflow-hidden rounded-lg border bg-slate-100">
-              {product.images && product.images[0] ? (
-                <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex aspect-square items-center justify-center text-slate-300 text-6xl">🔧</div>
-              )}
-            </div>
-            {product.images && product.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto">
-                {product.images.map((img: string, i: number) => (
-                  <div key={i} className="h-16 w-16 flex-shrink-0 overflow-hidden rounded border border-slate-200">
-                    <img src={img} alt={`${product.name} ${i + 1}`} className="h-full w-full object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProductGallery images={product.images || []} name={product.name} />
 
           {/* ── Right: Info ── */}
           <div className="space-y-6">

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Contact Us", description: "Contact QuickEasy Lift Parts" };
+export const metadata: Metadata = { title: "Contact Us", description: "Contact QuickEase Lift Parts" };
 
 export default function ContactPage() {
   return (
@@ -8,7 +8,7 @@ export default function ContactPage() {
       {/* Banner */}
       <section className="bg-slate-800 py-16 text-center text-white">
         <h1 className="text-3xl font-bold md:text-4xl">Contact Us</h1>
-        <p className="mt-2 text-slate-300">Get in Touch with QuickEasy Lift Parts</p>
+        <p className="mt-2 text-slate-300">Get in Touch with QuickEase Lift Parts</p>
       </section>
 
       <section className="container mx-auto px-4 py-16">

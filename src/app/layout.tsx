@@ -12,8 +12,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "QuickEasy Lift Parts - 电梯配件供应商",
-    template: "%s | QuickEasy Lift Parts",
+    default: "QuickEase Lift Parts - 电梯配件供应商",
+    template: "%s | QuickEase Lift Parts",
   },
   description:
     "Quick Delivery. Easy Service. Zero Downtime. 专业电梯零部件供应商，提供门系统、控制系统、曳引系统等全系列电梯配件。",

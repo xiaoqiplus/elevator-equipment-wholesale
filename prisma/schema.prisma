@@ -133,11 +133,12 @@ model Favorite {
 }
 
 model Knowledge {
-  id      String   @id @default(cuid())
-  title   String
-  url     String
-  summary String?
-  content String?
-  date    DateTime @default(now())
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  summary   String?
+  content   String?
+  images    String?
+  date      DateTime @default(now())
   createdAt DateTime @default(now())
 }
