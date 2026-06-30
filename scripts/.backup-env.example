@@ -1,0 +1,12 @@
+# ─── 数据库备份配置 ────────────────────────────────────────────────────────
+# 从项目 .env 文件中获取以下值
+
+# Supabase 数据库连接串（使用 DIRECT_URL，5432端口，非 pgbouncer 的6543）
+SUPABASE_URL="postgresql://postgres.project:password@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
+
+# ─── 阿里云 OSS 配置 ──────────────────────────────────────────────────────
+# 如还没有 OSS Bucket，在阿里云控制台 → 对象存储 OSS → 创建 Bucket
+OSS_ENDPOINT="oss-cn-hangzhou.aliyuncs.com"
+OSS_BUCKET="your-bucket-name"
+OSS_ACCESS_KEY_ID="your-access-key-id"
+OSS_ACCESS_KEY_SECRET="your-access-key-secret"

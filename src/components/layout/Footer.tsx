@@ -1,89 +1,54 @@
 import Link from "next/link";
-import { Phone, Mail, MessageCircle } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="border-t bg-muted/50">
-      <div className="container mx-auto px-4 py-12">
+    <footer className="border-t bg-slate-50">
+      <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {/* Company Info */}
+          {/* Company */}
           <div>
-            <h3 className="mb-3 text-lg font-semibold">Elevator Equipment</h3>
-            <p className="text-sm text-muted-foreground">
-              Your trusted partner for elevator and lift components since 2010.
-              Specializing in high-quality elevator equipment wholesale.
+            <h3 className="mb-3 text-sm font-semibold text-slate-800">QuickEasy Lift Parts</h3>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              Quick Delivery. Easy Service. Zero Downtime.
+            </p>
+            <p className="mt-2 text-sm text-slate-500 leading-relaxed">
+              专业电梯零部件供应商，致力于为电梯维保公司、安装公司及电梯制造商提供高品质的电梯配件产品。
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Quick links */}
           <div>
-            <h3 className="mb-3 text-lg font-semibold">Quick Links</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href="/products" className="hover:text-foreground transition-colors">
-                  All Products
-                </Link>
-              </li>
-              <li>
-                <Link href="/categories" className="hover:text-foreground transition-colors">
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link href="/brands" className="hover:text-foreground transition-colors">
-                  Brands
-                </Link>
-              </li>
-              <li>
-                <Link href="/quotation" className="hover:text-foreground transition-colors">
-                  Request a Quote
-                </Link>
-              </li>
-            </ul>
+            <h3 className="mb-3 text-sm font-semibold text-slate-800">快速链接</h3>
+            <div className="flex flex-col space-y-2">
+              <Link href="/products" className="text-sm text-slate-500 hover:text-slate-800">
+                产品中心
+              </Link>
+              <Link href="/categories" className="text-sm text-slate-500 hover:text-slate-800">
+                产品分类
+              </Link>
+              <Link href="/about" className="text-sm text-slate-500 hover:text-slate-800">
+                关于我们
+              </Link>
+              <Link href="/contact" className="text-sm text-slate-500 hover:text-slate-800">
+                联系我们
+              </Link>
+            </div>
           </div>
 
           {/* Contact */}
           <div>
-            <h3 className="mb-3 text-lg font-semibold">Contact Us</h3>
-            <ul className="space-y-3 text-sm text-muted-foreground">
-              <li className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
-                <span>+44 7507 940266</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                <span>sales@elevatorequipment.com</span>
-              </li>
-              <li>
-                <Link
-                  href="https://wa.me/447507940266"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 transition-colors"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span>Chat on WhatsApp</span>
-                </Link>
-              </li>
-            </ul>
-
-            {/* WhatsApp Floating Button */}
-            <div className="mt-4">
-              <Link
-                href="https://wa.me/447507940266"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-green-500 px-4 py-2 text-sm font-medium text-white shadow-lg hover:bg-green-600 transition-colors"
-              >
-                <MessageCircle className="h-5 w-5" />
-                WhatsApp Inquiry
-              </Link>
+            <h3 className="mb-3 text-sm font-semibold text-slate-800">联系方式</h3>
+            <div className="space-y-2 text-sm text-slate-500">
+              <p>📞 电话：138-xxxx-xxxx</p>
+              <p>📧 邮箱：info@xx-elevator.com</p>
+              <p>💬 微信：xx-elevator-parts</p>
+              <p>📍 地址：XX省XX市XX区XX路XX号</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 border-t pt-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Elevator Equipment Wholesale. All rights reserved.</p>
+        <div className="mt-8 border-t pt-6 text-center text-xs text-slate-400">
+          © {new Date().getFullYear()} QuickEasy Lift Parts 版权所有
         </div>
       </div>
     </footer>

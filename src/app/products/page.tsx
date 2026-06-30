@@ -3,7 +3,6 @@ import { Prisma } from "@prisma/client";
 import ProductList from "@/components/products/ProductList";
 import ProductFilters from "@/components/products/ProductFilters";
 
-// ISR: re-generate every 60 seconds if there's traffic
 export const revalidate = 60;
 
 export default async function ProductsPage(props: any = {}) {
@@ -23,12 +22,8 @@ export default async function ProductsPage(props: any = {}) {
   try {
     const where: Prisma.ProductWhereInput = {};
 
-    if (category) {
-      where.category = { slug: category };
-    }
-    if (brand) {
-      where.brand = { slug: brand };
-    }
+    if (category) where.category = { slug: category };
+    if (brand) where.brand = { slug: brand };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -36,7 +31,6 @@ export default async function ProductsPage(props: any = {}) {
       ];
     }
 
-    // Only fetch fields we need for the list view — skip documents & full specs
     const [results, count] = await Promise.all([
       prisma.product.findMany({
         where,
@@ -46,46 +40,27 @@ export default async function ProductsPage(props: any = {}) {
           sku: true,
           name: true,
           description: true,
-          price: true,
           images: true,
           specs: true,
           category: { select: { name: true, slug: true } },
           brand: { select: { name: true, slug: true } },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { name: "asc" },
       }),
       prisma.product.count({ where }),
     ]);
 
-    products = results.map((p) => ({
-      sku: p.sku,
-      name: p.name,
-      description: p.description ?? undefined,
-      price: null,
-      images: p.images,
-      specs: p.specs as Record<string, unknown> | null,
-      category: p.category ? { name: p.category.name, slug: p.category.slug } : null,
-      brand: p.brand ? { name: p.brand.name, slug: p.brand.slug } : null,
-    }));
+    products = results;
     total = count;
-  } catch (err) {
-    fetchError = err instanceof Error ? err.message : "获取产品列表失败";
+  } catch (err: any) {
+    fetchError = err.message ?? "Unknown error";
   }
-
-  const initialFilters = { search, category, brand };
 
   return (
     <div className="container mx-auto space-y-6 px-4 py-8">
-      <h1 className="text-3xl font-bold tracking-tight">产品列表</h1>
-      <ProductFilters initialFilters={initialFilters} />
-      <ProductList
-        products={products}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        loading={false}
-        error={fetchError}
-      />
+      <h1 className="text-3xl font-bold tracking-tight text-slate-800">产品中心</h1>
+      <ProductFilters />
+      <ProductList products={products} total={total} page={page} pageSize={pageSize} error={fetchError} />
     </div>
   );
 }

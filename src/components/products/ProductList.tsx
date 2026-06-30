@@ -9,7 +9,6 @@ export interface ProductData {
   sku: string;
   name: string;
   description?: string;
-  price: number | null;
   images: string[];
   specs?: Record<string, unknown> | null;
   category?: { name: string; slug: string } | null;
@@ -89,7 +88,6 @@ export default function ProductList({
             sku={product.sku}
             name={product.name}
             description={product.description}
-            price={product.price}
             images={product.images}
             specs={product.specs}
           />

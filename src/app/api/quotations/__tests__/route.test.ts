@@ -21,10 +21,10 @@ let customerId: string;
 let adminId: string;
 let productSku: string;
 
-// Mock NextAuth session (default export — used via import getServerSession from "next-auth")
-const mockSession: { user?: { email?: string; id?: string }; expires?: string } = {};
-vi.mock("next-auth", () => ({
-  default: () => mockSession,
+// Mock NextAuth auth() — used via import { auth } from "@/lib/auth/auth"
+const mockSession: { user?: { email?: string; id?: string; name?: string; isApproved?: boolean; role?: string }; expires?: string } = {};
+vi.mock("@/lib/auth/auth", () => ({
+  auth: () => mockSession,
 }));
 
 // Mock Resend

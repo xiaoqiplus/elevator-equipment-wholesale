@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notifyNewQuotation } from "@/lib/email/notifyQuotation";
-import { getSessionFromRequest } from "@/lib/auth/utils";
+import { auth } from "@/lib/auth/auth";
 
 export const dynamic = "force-dynamic";
 
 // ─── POST /api/quotations  ─────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
-  if (!session) {
+  const session = await auth();
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const user = session.user;
 
   let body: any;
   try {
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
 
   const quotation = await prisma.quotationRequest.create({
     data: {
-      userId: session.userId,
+      userId: user.id!,
       status: "PENDING",
       items: itemsSnapshot,
     },
@@ -71,9 +73,9 @@ export async function POST(request: NextRequest) {
     status: quotation.status,
     items: itemsSnapshot,
     user: {
-      email: session.email,
-      name: (session as any).name,
-      companyName: (session as any).companyName,
+      email: user.email!,
+      name: user.name,
+      companyName: (user as any).companyName,
     },
     createdAt: quotation.createdAt,
   }).catch((err) => {
@@ -89,13 +91,13 @@ export async function POST(request: NextRequest) {
 // ─── GET /api/quotations  ──────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  const session = await getSessionFromRequest(request);
-  if (!session) {
+  const session = await auth();
+  if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const quotations = await prisma.quotationRequest.findMany({
-    where: { userId: session.userId },
+    where: { userId: session.user.id! },
     orderBy: { createdAt: "desc" },
   });
 
