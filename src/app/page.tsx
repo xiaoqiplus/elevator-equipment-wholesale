@@ -28,21 +28,49 @@ export default async function Home() {
       {/* ── Why Choose Us ── */}
       <section className="py-20" data-aos="fade-up">
         <div className="container mx-auto px-4">
-          <h2 className="mb-2 text-center text-2xl font-bold text-slate-800">Why Customers Choose Us</h2>
-          <p className="mb-12 text-center text-sm text-slate-400">What Makes QuickEasy Lift Parts Different</p>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <h4 className="mb-2 text-center text-2xl font-bold text-slate-800">Why Customers Choose Us</h4>
+          <p className="mb-14 text-center text-sm text-slate-400">What Makes QuickEasy Lift Parts Different</p>
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
             {[
-              { icon: "🚚", title: "Fast Delivery", desc: "Quick dispatch and reliable shipping worldwide. Most orders ship within 24 hours." },
-              { icon: "✅", title: "Quality Guaranteed", desc: "All parts sourced from certified manufacturers. Strict quality control at every step." },
-              { icon: "🎧", title: "Expert Support", desc: "Technical team with decades of elevator industry experience." },
-              { icon: "🏢", title: "Complete Inventory", desc: "Extensive stock of elevator parts for all major brands — Otis, Kone, Schindler, Mitsubishi & more." },
+              { title: "Strong Team", icon: "🚚", desc: "Years of experience in elevator industry. Professional team with deep technical knowledge." },
+              { title: "Complete Category", icon: "✅", desc: "Select and gather multiple quality suppliers. Various elevator parts for all major brands." },
+              { title: "Timely Delivery", icon: "📦", desc: "A large number of commonly used accessories are stocked. Quick dispatch worldwide." },
+              { title: "Worry Free After Sale", icon: "🎧", desc: "Can provide technical support and product return services. We're here to help." },
             ].map((item, i) => (
-              <Card key={i} className="border-0 bg-slate-50 p-6 text-center shadow-sm">
-                <div className="mb-4 text-4xl">{item.icon}</div>
-                <h3 className="mb-2 font-semibold text-slate-800">{item.title}</h3>
-                <p className="text-sm text-slate-500">{item.desc}</p>
-              </Card>
+              <div key={i} className="choose-item text-center">
+                <div className="mb-2 text-sm font-semibold text-slate-700">{item.title}</div>
+                <div className="mb-4 text-5xl">{item.icon}</div>
+                <div className="text-sm text-slate-500 leading-relaxed">{item.desc}</div>
+              </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── About Company ── */}
+      <section className="py-20" data-aos="fade-up">
+        <div className="container mx-auto px-4">
+          <div className="grid items-center gap-10 md:grid-cols-2">
+            <div className="space-y-4">
+              <h4 className="text-2xl font-bold text-slate-800">QuickEasy Lift Parts Inc.</h4>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                QuickEasy Lift Parts Inc., located in China, is a professional elevator parts supplier. 
+                We specialize in providing high-quality elevator components for all major brands including 
+                Otis, Kone, Schindler, Mitsubishi, ThyssenKrupp, and more.
+              </p>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                With extensive industry experience and a comprehensive inventory, we serve elevator 
+                maintenance companies, contractors, and manufacturers worldwide.
+              </p>
+              <Button asChild>
+                <Link href="/about">Read More <ArrowRight className="ml-2 h-4 w-4" /></Link>
+              </Button>
+            </div>
+            <div className="flex items-center justify-center">
+              <div className="h-64 w-full rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 text-6xl">
+                🏢
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -93,6 +121,38 @@ export default async function Home() {
                     <p className="text-sm font-medium text-slate-700">{cat.name}</p>
                   </CardContent>
                 </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Knowledge / Blog ── */}
+      <section className="bg-slate-50 py-20" data-aos="fade-up">
+        <div className="container mx-auto px-4">
+          <div className="mb-12 flex items-center justify-between">
+            <div>
+              <h4 className="text-2xl font-bold text-slate-800">What&apos;s Going on in Our Blog?</h4>
+              <p className="text-sm text-slate-400">Knowledges</p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/contact">View All <ArrowRight className="ml-1 h-4 w-4" /></Link>
+            </Button>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              { title: "How to Choose the Right Elevator Door Operator", date: "Jun 24, 2026", text: "A comprehensive guide to selecting elevator door operators based on your building's traffic patterns and elevator specifications." },
+              { title: "Understanding Elevator Inverter Specifications", date: "Jun 18, 2026", text: "Key parameters to consider when selecting an elevator inverter: voltage rating, power output, and compatibility with existing systems." },
+              { title: "Common Elevator PCB Board Failures and Solutions", date: "Jun 10, 2026", text: "Troubleshooting guide for common elevator control board issues. Learn to diagnose and resolve faults quickly." },
+              { title: "Elevator Safety Components: Maintenance Schedule Guide", date: "Jun 2, 2026", text: "Recommended inspection and replacement intervals for elevator safety gears, governors, buffers, and tension devices." },
+            ].map((post, i) => (
+              <Link key={i} href="/contact" className="group">
+                <div className="mb-3 aspect-video rounded-lg bg-slate-200 flex items-center justify-center text-slate-300 text-2xl">
+                  📋
+                </div>
+                <p className="mb-1 text-xs text-slate-400">{post.date}</p>
+                <h3 className="mb-1 text-sm font-semibold text-slate-800 line-clamp-2 group-hover:text-slate-600 transition-colors">{post.title}</h3>
+                <p className="text-xs text-slate-500 line-clamp-2">{post.text}</p>
               </Link>
             ))}
           </div>

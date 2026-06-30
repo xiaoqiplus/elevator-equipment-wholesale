@@ -131,3 +131,13 @@ model Favorite {
 
   @@id([userId, productId])
 }
+
+model Knowledge {
+  id      String   @id @default(cuid())
+  title   String
+  url     String
+  summary String?
+  content String?
+  date    DateTime @default(now())
+  createdAt DateTime @default(now())
+}

@@ -44,7 +44,8 @@ export default function HeroCarousel() {
                 <Button size="lg" asChild className="bg-white text-slate-900 hover:bg-slate-100 px-8">
                   <Link href="/products">View Products</Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild className="border-white/30 text-white hover:bg-white/10 px-8">
+                <Button size="lg" asChild
+                  className="border-2 border-white/40 bg-transparent text-white hover:bg-white/10 px-8">
                   <Link href="/contact">Contact Us</Link>
                 </Button>
               </div>
