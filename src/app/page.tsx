@@ -1,4 +1,4 @@
-"""首页：Gentinf 风格复制"""
+// 首页：Gentinf 风格复制
 import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
