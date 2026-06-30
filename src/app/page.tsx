@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "QuickEasy Lift Parts - Elevator Part
 
 const icons = [Package, Cable, Wrench, Gauge, Shield];
 
-const HOT_SKUS = ["ELE-DR-001", "ELE-CT-002", "ELE-CB-003", "ELE-SF-001", "ELE-TR-001", "ELE-DR-002"];
+const HOT_SKUS = ["EL-SIE-001", "EL-SIE-002", "LFT-OTI-001", "LFT-OTI-002", "LFT-OTI-004", "EL-SIE-005"];
 
 export default async function Home() {
   const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
