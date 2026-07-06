@@ -108,7 +108,7 @@ export default async function ProductsPage({
               <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                 <div className="aspect-video bg-slate-50 flex items-center justify-center overflow-hidden">
                   {Array.isArray(cat.products[0]?.images) && cat.products[0].images[0] ? (
-                    <img src={cat.products[0].images[0]} alt={cat.name} className="h-full w-full object-cover" />
+                    <img src={cat.products[0].images[0] as string} alt={cat.name} className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-3xl text-slate-300">📦</span>
                   )}

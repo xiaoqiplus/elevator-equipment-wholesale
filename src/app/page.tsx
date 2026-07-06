@@ -98,7 +98,7 @@ export default async function Home() {
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                   <div className="aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
                     {Array.isArray(p.images) && p.images[0] ? (
-                      <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
+                      <img src={p.images[0] as string} alt={p.name} className="h-full w-full object-cover" />
                     ) : (
                       <span className="text-5xl text-slate-200">🔧</span>
                     )}
@@ -130,7 +130,7 @@ export default async function Home() {
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5">
                   <div className="aspect-video bg-slate-100 overflow-hidden">
                     {Array.isArray(cat.products[0]?.images) && cat.products[0].images[0] ? (
-                      <img src={cat.products[0].images[0]} alt={cat.name}
+                      <img src={cat.products[0].images[0] as string} alt={cat.name}
                         className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-2xl text-slate-300">📦</div>
