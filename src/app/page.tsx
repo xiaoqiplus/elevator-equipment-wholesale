@@ -10,7 +10,8 @@ import HeroCarousel from "@/components/HeroCarousel";
 
 export const metadata: Metadata = { title: "QuickEase Lift Parts - Elevator Parts Supplier" };
 
-const HOT_SKUS = ["GENT-MONARCH-EL", "GENT-KONE-ELEVA", "GENT-OTIS-ELEVA", "GENT-WECO-ELEVA", "GENT-ELEVATOR-M", "GENT-SEMPERIT-E"];
+const HOT_SKUS = ["GENT-MONARCH-EL", "GENT-KONE-ELEVA", "GENT-OTIS-ELEVA", "GENT-WECO-ELEVA", "GENT-ELEVATOR-M", "GENT-SEMPERIT-E",
+  "GENT-TAMAGAWAELEVATORENCODERTS5213N", "GENT-KONEELEVATORLEVELINGSENSORKM86", "GENT-TKEELEVATORMAINBOARDRLCU2A"];
 
 export default async function Home() {
   const categories = await prisma.category.findMany({
@@ -56,9 +57,9 @@ export default async function Home() {
         <div className="container mx-auto px-4">
           <div className="grid items-center gap-10 md:grid-cols-2">
             <div className="space-y-4">
-              <h4 className="text-2xl font-bold text-slate-800">QuickEase Lift Parts Inc.</h4>
+              <h4 className="text-2xl font-bold text-slate-800">XI'AN QUICKEASE LIFT PARTS CO., Ltd</h4>
               <p className="text-sm text-slate-500 leading-relaxed">
-                QuickEase Lift Parts Inc., located in China, is a professional elevator parts supplier. 
+                XI'AN QUICKEASE LIFT PARTS CO., Ltd, located in Shaanxi, China, is a professional elevator parts supplier. 
                 We specialize in providing high-quality elevator components for all major brands including 
                 Otis, Kone, Schindler, Mitsubishi, ThyssenKrupp, and more.
               </p>
@@ -145,6 +146,39 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ── Top Brands ── */}
+      <section className="py-16" data-aos="fade-up">
+        <div className="container mx-auto px-4 text-center">
+          <h4 className="mb-2 text-2xl font-bold text-slate-800">Top Brands</h4>
+          <p className="mb-10 text-sm text-slate-400">Elevator Parts for All Major Manufacturers</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {[
+              { name: "Mitsubishi", slug: "mitsubishi", count: 137 },
+              { name: "KONE", slug: "kone", count: 121 },
+              { name: "Otis", slug: "otis", count: 85 },
+              { name: "TKE", slug: "tke", count: 36 },
+              { name: "XIZI OTIS", slug: "xizi-otis", count: 31 },
+              { name: "Monarch", slug: "monarch", count: 29 },
+              { name: "HITACHI", slug: "hitachi", count: 22 },
+              { name: "Hyundai", slug: "hyundai", count: 19 },
+              { name: "ThyssenKrupp", slug: "thyssenkrupp", count: 19 },
+              { name: "SIGMA", slug: "sigma", count: 16 },
+              { name: "Fujitec", slug: "fujitec", count: 15 },
+              { name: "Toshiba", slug: "toshiba", count: 12 },
+            ].map((brand) => (
+              <Link key={brand.slug} href={`/brands/${brand.slug}`}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:shadow-md hover:-translate-y-0.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
+                  {brand.name[0]}
+                </span>
+                <span>{brand.name}</span>
+                <span className="text-xs text-slate-400">({brand.count})</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Knowledge / Blog ── */}
       <section className="bg-slate-50 py-20" data-aos="fade-up">
         <div className="container mx-auto px-4">
@@ -185,7 +219,7 @@ export default async function Home() {
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
             <a href="mailto:info@quickeasyliftparts.com" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📧 info@quickeasyliftparts.com</a>
             <span className="hidden text-slate-600 md:inline">|</span>
-            <a href="tel:+86138xxxxxxx" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📞 +86 138-xxxx-xxxx</a>
+            <a href="tel:+86138xxxxxxx" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📞 +86 17791693312</a>
             <span className="hidden text-slate-600 md:inline">|</span>
             <a href="https://wa.me/86138xxxxxxx" target="_blank" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">💬 WhatsApp</a>
           </div>

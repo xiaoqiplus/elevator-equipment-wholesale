@@ -44,7 +44,7 @@ export default async function KnowledgeDetailPage({ params }: Props) {
           <div className="mb-8">
             {post.images.split(",").slice(0, 1).map((img, i) => (
               <img key={i} src={img} alt={post.title}
-                className="w-full max-w-2xl rounded-lg border bg-slate-50 object-cover h-64" />
+                className="w-full max-w-2xl rounded-lg border bg-slate-50 object-contain h-auto max-h-96" />
             ))}
           </div>
         )}

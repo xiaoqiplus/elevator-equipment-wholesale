@@ -20,20 +20,14 @@ export default function ProductGallery({ images, name }: Props) {
 
   return (
     <div>
-      {/* Main image */}
       <div className="mb-4 overflow-hidden rounded-lg border bg-slate-50">
         <img
           src={images[activeIndex]}
           alt={`${name} ${activeIndex + 1}`}
           className="h-full w-full object-cover cursor-pointer"
-          onClick={() => {
-            const next = (activeIndex + 1) % images.length;
-            setActiveIndex(next);
-          }}
+          onClick={() => setActiveIndex((activeIndex + 1) % images.length)}
         />
       </div>
-
-      {/* Thumbnails */}
       {images.length > 1 && (
         <div className="flex gap-2 overflow-x-auto">
           {images.map((img, i) => (

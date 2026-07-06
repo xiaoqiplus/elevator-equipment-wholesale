@@ -9,12 +9,12 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold text-white">QuickEase Lift Parts</h3>
             <p className="mb-4 text-sm leading-relaxed">
-              Professional elevator parts supplier. Quick Delivery. Easy Service. Zero Downtime.
+              XI'AN QUICKEASE LIFT PARTS CO., Ltd - Professional elevator parts supplier
             </p>
             <div className="flex gap-3">
-              <a href="#" className="text-slate-400 hover:text-white transition-colors text-xs">FB</a>
-              <a href="#" className="text-slate-400 hover:text-white transition-colors text-xs">IN</a>
-              <a href="#" className="text-slate-400 hover:text-white transition-colors text-xs">YT</a>
+              <Link href="https://facebook.com" target="_blank" className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">f</Link>
+              <Link href="https://linkedin.com" target="_blank" className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">in</Link>
+              <Link href="https://youtube.com" target="_blank" className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-xs text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">▶</Link>
             </div>
           </div>
 
@@ -22,12 +22,12 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold text-white">Product Categories</h3>
             <div className="flex flex-col space-y-2 text-sm">
-              <Link href="/products" className="text-slate-400 hover:text-white transition-colors">Elevator Door Parts</Link>
-              <Link href="/products" className="text-slate-400 hover:text-white transition-colors">Elevator PCB Board</Link>
-              <Link href="/products" className="text-slate-400 hover:text-white transition-colors">Elevator Inverter</Link>
-              <Link href="/products" className="text-slate-400 hover:text-white transition-colors">Elevator Service Tool</Link>
-              <Link href="/products" className="text-slate-400 hover:text-white transition-colors">Elevator Safety Parts</Link>
-              <Link href="/products" className="text-slate-400 hover:text-white transition-colors">Escalator Parts</Link>
+              <Link href="/categories/elevator-door-parts" className="text-slate-400 hover:text-white transition-colors">Elevator Door Parts</Link>
+              <Link href="/categories/elevator-pcb" className="text-slate-400 hover:text-white transition-colors">Elevator PCB Board</Link>
+              <Link href="/categories/elevator-inverter" className="text-slate-400 hover:text-white transition-colors">Elevator Inverter</Link>
+              <Link href="/categories/elevator-service-tool" className="text-slate-400 hover:text-white transition-colors">Elevator Service Tool</Link>
+              <Link href="/categories/elevator-safety-parts" className="text-slate-400 hover:text-white transition-colors">Elevator Safety Parts</Link>
+              <Link href="/categories/escalator-parts" className="text-slate-400 hover:text-white transition-colors">Escalator Parts</Link>
             </div>
           </div>
 
@@ -47,9 +47,9 @@ export default function Footer() {
             <h3 className="mb-4 text-sm font-semibold text-white">Contact Us</h3>
             <div className="space-y-3 text-sm text-slate-400">
               <p>📧 info@quickeasyliftparts.com</p>
-              <p>📞 +86 138-xxxx-xxxx</p>
-              <p>💬 WhatsApp: +86 138-xxxx-xxxx</p>
-              <p>📍 XX Province, China</p>
+              <p>📞 +86 17791693312 / +86 13335386941</p>
+              <p>💬 WhatsApp: +86 17791693312 / +86 13335386941</p>
+              <p>📍 Shaanxi, China</p>
             </div>
           </div>
         </div>

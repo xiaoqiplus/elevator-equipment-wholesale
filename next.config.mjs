@@ -8,15 +8,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: "quickeasyliftparts.com",
       },
       {
         protocol: "https",
-        hostname: "pub-*.r2.dev",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.example.com",
+        hostname: "*.quickeasyliftparts.com",
       },
     ],
   },
@@ -41,7 +37,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'; " +
               "img-src 'self' https: data:; " +
               "font-src 'self'; " +
-              "connect-src 'self' https://*.supabase.co https://*.vercel.app https://api.resend.com; " +
+              "connect-src 'self' https://quickeasyliftparts.com; " +
               "frame-src 'none'; " +
               "object-src 'none'; " +
               "base-uri 'self'; " +
@@ -55,7 +51,7 @@ const nextConfig = {
         headers: [
           {
             key: "Access-Control-Allow-Origin",
-            value: process.env.NEXT_PUBLIC_SITE_URL || "https://elevator-equipment-wholesale.vercel.app",
+            value: process.env.NEXT_PUBLIC_SITE_URL || "https://quickeasyliftparts.com",
           },
         ],
       },

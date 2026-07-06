@@ -1,5 +1,14 @@
 import { PrismaClient } from "@prisma/client";
 
+// ── Prisma JSON Type Overrides ──────────────────────────────────────────
+// Ensure Json fields return proper TypeScript types instead of JsonValue.
+declare global {
+  namespace PrismaJson {
+    type ProductImages = string[];
+    type ProductSpecs = Record<string, string>;
+  }
+}
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
   __TEST_PRISMA__: PrismaClient | undefined;

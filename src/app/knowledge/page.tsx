@@ -18,12 +18,21 @@ export default async function KnowledgePage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {articles.map((post) => (
             <Link key={post.id} href={`/knowledge/${post.id}`} className="group">
-              <article className="h-full rounded-lg border p-5 transition-all hover:shadow-md hover:-translate-y-1">
-                <p className="mb-2 text-xs text-slate-400">
-                  {new Date(post.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </p>
-                <h2 className="mb-2 text-sm font-semibold text-slate-800 line-clamp-2 group-hover:text-slate-600">{post.title}</h2>
-                <p className="text-xs text-slate-500 line-clamp-3">{post.summary || post.content?.slice(0, 200)}</p>
+              <article className="h-full overflow-hidden rounded-lg border transition-all hover:shadow-md hover:-translate-y-1">
+                <div className="aspect-video bg-slate-100 flex items-center justify-center overflow-hidden">
+                  {post.images ? (
+                    <img src={post.images.split(",")[0]} alt={post.title}
+                      className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-2xl text-slate-300">📋</span>
+                  )}
+                </div>
+                <div className="p-4">
+                  <p className="mb-1 text-xs text-slate-400">
+                    {new Date(post.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  </p>
+                  <h2 className="text-sm font-semibold text-slate-800 line-clamp-2 group-hover:text-slate-600">{post.title}</h2>
+                </div>
               </article>
             </Link>
           ))}

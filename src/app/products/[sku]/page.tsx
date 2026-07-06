@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import ProductInquiryForm from "@/components/ProductInquiryForm";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,11 +47,11 @@ export default async function ProductDetailPage({ params }: Props) {
       </div>
 
       <section className="container mx-auto px-4 py-10">
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid gap-8 lg:grid-cols-[1fr_1fr_320px]">
           {/* ── Left: Images ── */}
           <ProductGallery images={product.images || []} name={product.name} />
 
-          {/* ── Right: Info ── */}
+          {/* ── Center: Info ── */}
           <div className="space-y-6">
             <div>
               <Badge variant="secondary" className="mb-2 font-mono text-xs">{product.sku}</Badge>
@@ -100,7 +101,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   <a href="mailto:info@quickeasyliftparts.com">📧 Email Us</a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href="https://wa.me/86138xxxxxxx" target="_blank">💬 WhatsApp</a>
+                  <a href="https://wa.me/8617791693312" target="_blank">💬 WhatsApp</a>
                 </Button>
                 <Button variant="outline" asChild>
                   <Link href="/contact">Contact Page</Link>
@@ -108,6 +109,21 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
             </div>
           </div>
+
+          {/* ── Right: Inquiry Sidebar ── */}
+          <aside className="space-y-5">
+            {/* Contact info */}
+            <div className="rounded-lg border bg-slate-50 p-6">
+              <h3 className="mb-4 text-base font-bold text-slate-800">Send Message</h3>
+              <div className="space-y-3 text-sm text-slate-600">
+                <p>📧 <a href="mailto:info@quickeasyliftparts.com" className="text-blue-600 hover:underline">info@quickeasyliftparts.com</a></p>
+                <p>📞 +86 17791693312</p>
+                <p>💬 <a href="https://wa.me/8617791693312" target="_blank" className="text-green-600 hover:underline">Chat on WhatsApp</a></p>
+              </div>
+            </div>
+            {/* Quick inquiry */}
+            <ProductInquiryForm />
+          </aside>
         </div>
       </section>
 

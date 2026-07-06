@@ -6,9 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
@@ -56,7 +55,7 @@ model Product {
   price       Decimal?
   categoryId  String?
   brandId     String?
-  images      String[]
+  images      Json
   specs       Json?
 
   category  Category?  @relation(fields: [categoryId], references: [id])
@@ -130,6 +129,15 @@ model Favorite {
   createdAt DateTime @default(now())
 
   @@id([userId, productId])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  createdAt DateTime @default(now())
 }
 
 model Knowledge {

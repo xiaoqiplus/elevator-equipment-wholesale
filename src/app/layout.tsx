@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import FloatingContact from "@/components/FloatingContact";
 import "./globals.css";
 import "swiper/css";
 import "swiper/css/navigation";
@@ -12,7 +13,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "QuickEase Lift Parts - 电梯配件供应商",
+    default: "XI'AN QUICKEASE LIFT PARTS CO., Ltd",
     template: "%s | QuickEase Lift Parts",
   },
   description:
@@ -29,7 +30,8 @@ export const metadata: Metadata = {
     "奥的斯电梯配件",
   ],
   icons: {
-    icon: "/logo.png",
+    icon: "/logo_transparent.png",
+    apple: "/logo_transparent.png",
   },
 };
 
@@ -45,6 +47,7 @@ export default function RootLayout({
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
+          <FloatingContact />
         </AOSProvider>
       </body>
     </html>
