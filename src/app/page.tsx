@@ -97,7 +97,7 @@ export default async function Home() {
               <Link key={p.sku} href={`/products/${p.sku}`}>
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                   <div className="aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
-                    {p.images && p.images[0] ? (
+                    {Array.isArray(p.images) && p.images[0] ? (
                       <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
                     ) : (
                       <span className="text-5xl text-slate-200">🔧</span>
@@ -129,7 +129,7 @@ export default async function Home() {
               <Link key={cat.id} href={`/categories/${cat.slug}`}>
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5">
                   <div className="aspect-video bg-slate-100 overflow-hidden">
-                    {cat.products[0]?.images?.[0] ? (
+                    {Array.isArray(cat.products[0]?.images) && cat.products[0].images[0] ? (
                       <img src={cat.products[0].images[0]} alt={cat.name}
                         className="h-full w-full object-cover" />
                     ) : (

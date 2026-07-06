@@ -73,7 +73,7 @@ export default async function SearchPage({
                 <Link key={p.sku} href={`/products/${p.sku}`}>
                   <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                     <div className="aspect-square bg-slate-50 flex items-center justify-center">
-                      {p.images && p.images[0] ? (
+                      {Array.isArray(p.images) && p.images[0] ? (
                         <img src={p.images[0]} alt={p.name} className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-4xl text-slate-300">🔧</span>

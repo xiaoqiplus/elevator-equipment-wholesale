@@ -49,7 +49,7 @@ export default async function ProductDetailPage({ params }: Props) {
       <section className="container mx-auto px-4 py-10">
         <div className="grid gap-8 lg:grid-cols-[1fr_1fr_320px]">
           {/* ── Left: Images ── */}
-          <ProductGallery images={product.images || []} name={product.name} />
+          <ProductGallery images={Array.isArray(product.images) ? product.images : []} name={product.name} />
 
           {/* ── Center: Info ── */}
           <div className="space-y-6">
