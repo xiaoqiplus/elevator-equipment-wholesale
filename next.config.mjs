@@ -3,10 +3,6 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "http",
-        hostname: "121.40.125.78",
-      },
-      {
         protocol: "https",
         hostname: "placehold.co",
       },
@@ -19,16 +15,6 @@ const nextConfig = {
         hostname: "*.quickeasyliftparts.com",
       },
     ],
-  },
-
-  // ── Proxy /uploads to old ECS server ─────────────────────────────────
-  async rewrites() {
-    return [
-      {
-        source: "/uploads/:path*",
-        destination: "http://121.40.125.78/uploads/:path*",
-      },
-    ];
   },
 
   // ── Secure Headers ─────────────────────────────────────────────────────
@@ -49,7 +35,7 @@ const nextConfig = {
               "default-src 'self'; " +
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
               "style-src 'self' 'unsafe-inline'; " +
-              "img-src 'self' https: data: http://121.40.125.78; " +
+              "img-src 'self' https: data:; " +
               "font-src 'self'; " +
               "connect-src 'self' https://quickeasyliftparts.com; " +
               "frame-src 'none'; " +
