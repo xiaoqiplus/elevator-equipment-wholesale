@@ -27,7 +27,7 @@ if (fs.existsSync(envPath)) {
 
 // Hard-coded fallback
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'mysql://u899509956_elevator_user:QuickEase2024%21@127.0.0.1:3306/u899509956_elevator_db';
+  process.env.DATABASE_URL = 'mysql://u899509956_elevator_user:QuickEase2024@localhost:3306/u899509956_elevator_db';
 }
 
 console.log('[startup] DATABASE_URL configured. Starting Next.js...');
