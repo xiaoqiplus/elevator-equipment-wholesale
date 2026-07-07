@@ -16,7 +16,7 @@ interface Props { params: { sku: string } }
 async function getProduct(sku: string) {
   return prisma.product.findUnique({
     where: { sku },
-    include: { category: true, brand: true, documents: true },
+    include: { category: true, brand: true },
   });
 }
 
