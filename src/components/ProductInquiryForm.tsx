@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 
-export default function ProductInquiryForm() {
+interface Props {
+  productSku?: string;
+  productName?: string;
+}
+
+export default function ProductInquiryForm({ productSku, productName }: Props) {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -11,13 +16,19 @@ export default function ProductInquiryForm() {
     const form = e.target as HTMLFormElement;
     setLoading(true);
     try {
+      let message = (form.elements.namedItem("message") as HTMLTextAreaElement).value;
+      // Prepend product info if available
+      if (productSku || productName) {
+        const prefix = `[Inquiry about ${productName || "product"} (SKU: ${productSku || "N/A"})]\n`;
+        message = prefix + message;
+      }
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: (form.elements.namedItem("name") as HTMLInputElement).value,
           email: (form.elements.namedItem("email") as HTMLInputElement).value,
-          message: (form.elements.namedItem("message") as HTMLTextAreaElement).value,
+          message,
         }),
       });
       if (res.ok) setSent(true);
@@ -28,6 +39,11 @@ export default function ProductInquiryForm() {
 
   return (
     <div className="rounded-lg border p-6">
+      {productSku && (
+        <p className="mb-3 text-xs text-slate-500">
+          Inquiring about: <strong>{productName || "Product"} ({productSku})</strong>
+        </p>
+      )}
       <h3 className="mb-4 text-base font-bold text-slate-800">Quick Inquiry</h3>
       {sent ? (
         <p className="py-4 text-center font-semibold text-green-600">✅ Sent! We&apos;ll reply soon.</p>

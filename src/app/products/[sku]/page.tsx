@@ -124,7 +124,7 @@ export default async function ProductDetailPage({ params }: Props) {
               </div>
             </div>
             {/* Quick inquiry */}
-            <ProductInquiryForm />
+            <ProductInquiryForm productSku={product.sku} productName={product.name} />
           </aside>
         </div>
       </section>
