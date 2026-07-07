@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import ProductGallery from "@/components/ProductGallery";
 import type { Metadata } from "next";
 
+export const dynamic = 'force-dynamic';
+
 interface Props { params: { sku: string } }
 
 async function getProduct(sku: string) {
