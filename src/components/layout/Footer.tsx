@@ -46,7 +46,7 @@ export default function Footer() {
           <div>
             <h3 className="mb-4 text-sm font-semibold text-white">Contact Us</h3>
             <div className="space-y-3 text-sm text-slate-400">
-              <p>📧 info@quickeasyliftparts.com</p>
+              <p>📧 info@quickeaseliftparts.com / sales@quickeaseliftparts.com</p>
               <p>📞 +86 17791693312 / +86 13335386941</p>
               <p>💬 WhatsApp: +86 17791693312 / +86 13335386941</p>
               <p>📍 Shaanxi, China</p>

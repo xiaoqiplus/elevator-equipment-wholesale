@@ -40,7 +40,7 @@ export default function ContactPage() {
               <div className="space-y-4 text-sm text-slate-600">
                 <div className="rounded-lg border p-5">
                   <p className="mb-1 font-semibold text-slate-800">📧 Email</p>
-                  <a href="mailto:info@quickeasyliftparts.com" className="text-blue-600 hover:underline">info@quickeasyliftparts.com</a>
+                  <a href="mailto:info@quickeaseliftparts.com" className="text-blue-600 hover:underline">info@quickeaseliftparts.com</a>
                 </div>
                 <div className="rounded-lg border p-5">
                   <p className="mb-1 font-semibold text-slate-800">📞 Phone</p>
