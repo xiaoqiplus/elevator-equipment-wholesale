@@ -28,8 +28,8 @@ export default function Header() {
       <div className="hidden border-b bg-slate-800 md:block">
         <div className="container mx-auto flex h-9 items-center justify-between px-4">
           <div className="flex items-center gap-4 text-xs text-slate-300">
-            <a href="mailto:info@quickeasyliftparts.com" className="flex items-center gap-1 hover:text-white transition-colors">
-              <Mail className="h-3 w-3" /> info@quickeasyliftparts.com
+            <a href="mailto:info@quickeaseliftparts.com" className="flex items-center gap-1 hover:text-white transition-colors">
+              <Mail className="h-3 w-3" /> info@quickeaseliftparts.com
             </a>
             <a href="tel:+8617791693312" className="flex items-center gap-1 hover:text-white transition-colors">
               <Phone className="h-3 w-3" /> +86 17791693312 / +86 13335386941

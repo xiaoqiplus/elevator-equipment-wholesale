@@ -100,7 +100,7 @@ export default async function ProductDetailPage({ params }: Props) {
               <p className="mb-4 text-sm text-slate-500">Contact us for pricing, availability, and technical details.</p>
               <div className="flex flex-wrap gap-3">
                 <Button asChild className="bg-slate-800 hover:bg-slate-700">
-                  <a href="mailto:info@quickeasyliftparts.com">📧 Email Us</a>
+                  <a href="mailto:info@quickeaseliftparts.com">📧 Email Us</a>
                 </Button>
                 <Button variant="outline" asChild>
                   <a href="https://wa.me/8617791693312" target="_blank">💬 WhatsApp</a>
@@ -118,7 +118,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <div className="rounded-lg border bg-slate-50 p-6">
               <h3 className="mb-4 text-base font-bold text-slate-800">Send Message</h3>
               <div className="space-y-3 text-sm text-slate-600">
-                <p>📧 <a href="mailto:info@quickeasyliftparts.com" className="text-blue-600 hover:underline">info@quickeasyliftparts.com</a></p>
+                <p>📧 <a href="mailto:info@quickeaseliftparts.com" className="text-blue-600 hover:underline">info@quickeaseliftparts.com</a></p>
                 <p>📞 +86 17791693312</p>
                 <p>💬 <a href="https://wa.me/8617791693312" target="_blank" className="text-green-600 hover:underline">Chat on WhatsApp</a></p>
               </div>

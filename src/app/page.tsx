@@ -217,7 +217,7 @@ export default async function Home() {
           <h2 className="mb-3 text-2xl font-bold text-white">Need Elevator Parts?</h2>
           <p className="mb-8 text-slate-300">Contact us for inquiries, quotes, or technical support</p>
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-            <a href="mailto:info@quickeasyliftparts.com" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📧 info@quickeasyliftparts.com</a>
+            <a href="mailto:info@quickeaseliftparts.com" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📧 info@quickeaseliftparts.com</a>
             <span className="hidden text-slate-600 md:inline">|</span>
             <a href="tel:+86138xxxxxxx" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📞 +86 17791693312</a>
             <span className="hidden text-slate-600 md:inline">|</span>

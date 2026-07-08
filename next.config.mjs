@@ -12,11 +12,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "quickeasyliftparts.com",
+        hostname: "quickeaseliftparts.com",
       },
       {
         protocol: "https",
-        hostname: "*.quickeasyliftparts.com",
+        hostname: "*.quickeaseliftparts.com",
       },
     ],
   },
@@ -51,7 +51,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'; " +
               "img-src 'self' https: data: http://121.40.125.78; " +
               "font-src 'self'; " +
-              "connect-src 'self' https://quickeasyliftparts.com; " +
+              "connect-src 'self' https://quickeaseliftparts.com; " +
               "frame-src 'none'; " +
               "object-src 'none'; " +
               "base-uri 'self'; " +
@@ -65,7 +65,7 @@ const nextConfig = {
         headers: [
           {
             key: "Access-Control-Allow-Origin",
-            value: process.env.NEXT_PUBLIC_SITE_URL || "https://quickeasyliftparts.com",
+            value: process.env.NEXT_PUBLIC_SITE_URL || "https://quickeaseliftparts.com",
           },
         ],
       },
