@@ -219,9 +219,9 @@ export default async function Home() {
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
             <a href="mailto:info@quickeaseliftparts.com" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📧 info@quickeaseliftparts.com</a>
             <span className="hidden text-slate-600 md:inline">|</span>
-            <a href="tel:+86138xxxxxxx" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📞 +86 17791693312</a>
+            <a href="tel:+8617791693312" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">📞 +86 17791693312</a>
             <span className="hidden text-slate-600 md:inline">|</span>
-            <a href="https://wa.me/86138xxxxxxx" target="_blank" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">💬 WhatsApp</a>
+            <a href="https://wa.me/8617791693312" target="_blank" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">💬 WhatsApp</a>
           </div>
         </div>
       </section>
