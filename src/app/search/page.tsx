@@ -20,9 +20,9 @@ export default async function SearchPage({
         where: {
           AND: keywords.map((kw) => ({
             OR: [
-              { name: { contains: kw, mode: "insensitive" } },
-              { sku: { contains: kw, mode: "insensitive" } },
-              { description: { contains: kw, mode: "insensitive" } },
+              { name: { contains: kw } },
+              { sku: { contains: kw } },
+              { description: { contains: kw } },
             ],
           })),
         },
