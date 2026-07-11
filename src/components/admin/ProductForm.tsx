@@ -236,10 +236,32 @@ export default function ProductForm({ sku }: Props) {
                 placeholder={`/uploads/xxx_${idx}.jpg`}
                 className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none"
               />
+              <label className="shrink-0 cursor-pointer px-2 py-1.5 text-xs text-white bg-slate-700 rounded hover:bg-slate-600 transition-colors">
+                上传
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    try {
+                      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+                      if (res.ok) {
+                        const data = await res.json();
+                        updateImage(idx, data.url);
+                      }
+                    } catch {}
+                    e.target.value = "";
+                  }}
+                />
+              </label>
               {url && (
-                <img src={url} alt="" className="w-10 h-10 object-cover rounded border" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <img src={url} alt="" className="w-10 h-10 object-cover rounded border shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
               )}
-              <button type="button" onClick={() => removeImage(idx)} className="text-red-400 hover:text-red-600 text-sm px-1">
+              <button type="button" onClick={() => removeImage(idx)} className="text-red-400 hover:text-red-600 text-sm px-1 shrink-0">
                 ✕
               </button>
             </div>
