@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       res.cookies.set("admin_token", token, {
         httpOnly: true,
         maxAge: 60 * 60 * 12, // 12 hours
-        path: "/admin",
+        path: "/",
         sameSite: "lax",
       });
       return res;

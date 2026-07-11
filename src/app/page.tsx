@@ -72,9 +72,11 @@ export default async function Home() {
               </Button>
             </div>
             <div className="flex items-center justify-center">
-              <div className="h-64 w-full rounded-lg bg-slate-100 flex items-center justify-center text-slate-300 text-6xl">
-                🏢
-              </div>
+              <img
+                src="/uploads/company.jpg"
+                alt="XI'AN QUICKEASE LIFT PARTS CO., Ltd"
+                className="h-64 w-full rounded-lg object-cover shadow-sm"
+              />
             </div>
           </div>
         </div>
