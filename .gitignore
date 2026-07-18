@@ -36,3 +36,7 @@ next-env.d.ts
 
 # Installers
 *.exe
+
+# Uploaded product images (local copies only, manually uploaded on Hostinger)
+/public/uploads/*.jpg
+/public/uploads/*.png
