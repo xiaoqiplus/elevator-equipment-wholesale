@@ -22,6 +22,7 @@ export default function ProductForm({ sku }: Props) {
     images: [""] as string[],
     specs: [["", ""]] as [string, string][],
   });
+  const [currentSku, setCurrentSku] = useState(sku || "");
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +110,8 @@ export default function ProductForm({ sku }: Props) {
     });
 
     const body = {
-      sku,
+      sku: sku || currentSku,
+      newSku: isEdit && currentSku !== sku ? currentSku : undefined,
       name: form.name,
       description: form.description,
       categorySlug: form.categorySlug || undefined,
@@ -161,9 +163,9 @@ export default function ProductForm({ sku }: Props) {
               <label className="block text-xs font-medium text-slate-600 mb-1">SKU</label>
               <input
                 type="text"
-                value={sku}
-                disabled
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-slate-50 text-slate-400"
+                value={currentSku}
+                onChange={(e) => setCurrentSku(e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none"
               />
             </div>
           )}
@@ -247,6 +249,8 @@ export default function ProductForm({ sku }: Props) {
                     if (!file) return;
                     const fd = new FormData();
                     fd.append("file", file);
+                    const editSku = sku || currentSku;
+                    if (editSku) fd.append("sku", editSku);
                     try {
                       const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
                       if (res.ok) {

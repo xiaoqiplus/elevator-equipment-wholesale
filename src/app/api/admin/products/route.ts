@@ -119,10 +119,19 @@ export async function PUT(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const { sku, name, description, categorySlug, brandSlug, images, specs } = data;
+    const { sku, newSku, name, description, categorySlug, brandSlug, images, specs } = data;
 
     if (!sku) {
       return NextResponse.json({ error: "SKU 不能为空" }, { status: 400 });
+    }
+
+    // 如果 SKU 有变动
+    const targetSku = newSku && newSku !== sku ? newSku : sku;
+    if (newSku && newSku !== sku) {
+      const exists = await prisma.product.findUnique({ where: { sku: newSku } });
+      if (exists) {
+        return NextResponse.json({ error: "新 SKU 已被占用" }, { status: 400 });
+      }
     }
 
     const category = categorySlug
@@ -135,6 +144,7 @@ export async function PUT(req: NextRequest) {
     await prisma.product.update({
       where: { sku },
       data: {
+        sku: targetSku,
         name,
         description: description || null,
         categoryId: category?.id || null,
@@ -144,7 +154,17 @@ export async function PUT(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ ok: true });
+    // 如果 SKU 变了，重命名图片文件夹
+    if (newSku && newSku !== sku) {
+      const fs = await import("fs");
+      const oldDir = path.join(process.cwd(), "public", "uploads", sku);
+      const newDir = path.join(process.cwd(), "public", "uploads", newSku);
+      if (fs.existsSync(oldDir)) {
+        fs.renameSync(oldDir, newDir);
+      }
+    }
+
+    return NextResponse.json({ ok: true, sku: targetSku });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
