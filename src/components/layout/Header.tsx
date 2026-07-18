@@ -31,11 +31,11 @@ export default function Header() {
             <a href="mailto:info@quickeaseliftparts.com" className="flex items-center gap-1 hover:text-white transition-colors">
               <Mail className="h-3 w-3" /> info@quickeaseliftparts.com
             </a>
-            <a href="tel:+8617791693312" className="flex items-center gap-1 hover:text-white transition-colors">
-              <Phone className="h-3 w-3" /> +86 17791693312 / +86 13335386941
+            <a href="tel:+8613335386941" className="flex items-center gap-1 hover:text-white transition-colors">
+              <Phone className="h-3 w-3" /> +86 13335386941
             </a>
           </div>
-          <a href="https://wa.me/8617791693312" target="_blank" className="text-xs text-green-400 hover:text-green-300 transition-colors">
+          <a href="https://wa.me/8613335386941" target="_blank" className="text-xs text-green-400 hover:text-green-300 transition-colors">
             💬 WhatsApp
           </a>
         </div>

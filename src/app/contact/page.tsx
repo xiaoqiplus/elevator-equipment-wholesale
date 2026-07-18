@@ -44,11 +44,11 @@ export default function ContactPage() {
                 </div>
                 <div className="rounded-lg border p-5">
                   <p className="mb-1 font-semibold text-slate-800">📞 Phone</p>
-                  <p>+86 17791693312 / +86 13335386941</p>
+                  <p>+86 13335386941</p>
                 </div>
                 <div className="rounded-lg border p-5">
                   <p className="mb-1 font-semibold text-slate-800">💬 WhatsApp</p>
-                  <a href="https://wa.me/8617791693312" target="_blank" className="text-green-600 hover:underline">Chat on WhatsApp</a>
+                  <a href="https://wa.me/8613335386941" target="_blank" className="text-green-600 hover:underline">Chat on WhatsApp</a>
                 </div>
                 <div className="rounded-lg border p-5">
                   <p className="mb-1 font-semibold text-slate-800">📍 Address</p>

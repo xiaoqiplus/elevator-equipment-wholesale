@@ -103,7 +103,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   <a href="mailto:info@quickeaseliftparts.com">📧 Email Us</a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href="https://wa.me/8617791693312" target="_blank">💬 WhatsApp</a>
+                  <a href="https://wa.me/8613335386941" target="_blank">💬 WhatsApp</a>
                 </Button>
                 <Button variant="outline" asChild>
                   <Link href="/contact">Contact Page</Link>
@@ -119,8 +119,8 @@ export default async function ProductDetailPage({ params }: Props) {
               <h3 className="mb-4 text-base font-bold text-slate-800">Send Message</h3>
               <div className="space-y-3 text-sm text-slate-600">
                 <p>📧 <a href="mailto:info@quickeaseliftparts.com" className="text-blue-600 hover:underline">info@quickeaseliftparts.com</a></p>
-                <p>📞 +86 17791693312</p>
-                <p>💬 <a href="https://wa.me/8617791693312" target="_blank" className="text-green-600 hover:underline">Chat on WhatsApp</a></p>
+                <p>📞 +86 13335386941</p>
+                <p>💬 <a href="https://wa.me/8613335386941" target="_blank" className="text-green-600 hover:underline">Chat on WhatsApp</a></p>
               </div>
             </div>
             {/* Quick inquiry */}
