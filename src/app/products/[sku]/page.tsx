@@ -23,7 +23,29 @@ async function getProduct(sku: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProduct(params.sku);
   if (!product) return { title: "Product Not Found" };
-  return { title: product.name, description: product.description || `Elevator component ${product.sku}` };
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://quickeaseliftparts.com";
+  const description = product.description?.replace(/<[^>]*>/g, "").slice(0, 160) || `High-quality elevator component ${product.sku}`;
+  return {
+    title: `${product.name} | Quick Easy Lift Parts`,
+    description,
+    keywords: ["elevator parts", "elevator components", product.sku, product.name, product.category?.name].filter(Boolean).join(", "),
+    openGraph: {
+      title: product.name,
+      description,
+      url: `${baseUrl}/products/${product.sku}`,
+      siteName: "Quick Easy Lift Parts",
+      type: "website",
+      images: Array.isArray(product.images) && product.images.length > 0
+        ? [{ url: `${baseUrl}${String(product.images[0])}`, width: 800, height: 600 }]
+        : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: product.name,
+      description,
+    },
+    alternates: { canonical: `${baseUrl}/products/${product.sku}` },
+  };
 }
 
 export default async function ProductDetailPage({ params }: Props) {

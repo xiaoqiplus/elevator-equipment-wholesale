@@ -4,7 +4,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Products" };
+export const metadata: Metadata = {
+  title: "Elevator Parts & Components | Quick Easy Lift Parts",
+  description: "Browse our catalog of high-quality elevator parts, elevator components, and lift accessories. Fast shipping worldwide.",
+  keywords: "elevator parts, elevator components, lift parts, elevator accessories, elevator equipment",
+  openGraph: {
+    title: "Elevator Parts & Components | Quick Easy Lift Parts",
+    description: "Browse our catalog of high-quality elevator parts, elevator components, and lift accessories.",
+    type: "website",
+  },
+};
 
 export default async function ProductsPage({
   searchParams,

@@ -126,11 +126,23 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: "SKU 不能为空" }, { status: 400 });
     }
 
-    // 如果 SKU 有变动
     const targetSku = newSku && newSku !== sku ? newSku : sku;
+
+    // 先找到产品（优先用旧 SKU，找不到再用新 SKU 兜底）
+    const product = await prisma.product.findUnique({ where: { sku } })
+      ?? (newSku && newSku !== sku ? await prisma.product.findUnique({ where: { sku: newSku } }) : null);
+
+    if (!product) {
+      return NextResponse.json({
+        error: `产品 ${sku} 不存在，请刷新页面后重试`,
+        hint: "refresh",
+      }, { status: 404 });
+    }
+
+    // 如果 SKU 有变动，检查新 SKU 是否已被其他产品占用
     if (newSku && newSku !== sku) {
-      const exists = await prisma.product.findUnique({ where: { sku: newSku } });
-      if (exists) {
+      const conflict = await prisma.product.findUnique({ where: { sku: newSku } });
+      if (conflict && conflict.id !== product.id) {
         return NextResponse.json({ error: "新 SKU 已被占用" }, { status: 400 });
       }
     }
@@ -142,8 +154,8 @@ export async function PUT(req: NextRequest) {
       ? await prisma.brand.findUnique({ where: { slug: brandSlug } })
       : null;
 
-    await prisma.product.update({
-      where: { sku },
+    const updated = await prisma.product.update({
+      where: { id: product.id },
       data: {
         sku: targetSku,
         name,
