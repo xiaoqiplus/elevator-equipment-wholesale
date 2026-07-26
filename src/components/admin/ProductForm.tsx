@@ -158,17 +158,16 @@ export default function ProductForm({ sku }: Props) {
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
           <h2 className="text-sm font-semibold text-slate-700">基本信息</h2>
 
-          {isEdit && (
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">SKU</label>
-              <input
-                type="text"
-                value={currentSku}
-                onChange={(e) => setCurrentSku(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none"
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">SKU *</label>
+            <input
+              type="text"
+              value={currentSku}
+              onChange={(e) => setCurrentSku(e.target.value)}
+              required
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none"
+            />
+          </div>
 
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">产品名称 *</label>
@@ -235,7 +234,7 @@ export default function ProductForm({ sku }: Props) {
                 type="text"
                 value={url}
                 onChange={(e) => updateImage(idx, e.target.value)}
-                placeholder={`/uploads/xxx_${idx}.jpg`}
+                placeholder={`/uploads/{SKU}/${idx + 1}.jpg`}
                 className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none"
               />
               <label className="shrink-0 cursor-pointer px-2 py-1.5 text-xs text-white bg-slate-700 rounded hover:bg-slate-600 transition-colors">
