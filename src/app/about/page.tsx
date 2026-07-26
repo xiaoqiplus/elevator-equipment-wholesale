@@ -69,7 +69,7 @@ Our product range covers all major elevator brands including Otis, Kone, Schindl
             QuickEase Lift Parts
           </h2>
           <div className="space-y-4 text-sm text-slate-600 leading-relaxed">
-            {paragraphs.map((p, i) => (
+            {paragraphs.map((p: string, i: number) => (
               <p key={i}>{p}</p>
             ))}
           </div>
