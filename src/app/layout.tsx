@@ -32,8 +32,11 @@ export const metadata: Metadata = {
     "奥的斯电梯配件",
   ],
   icons: {
-    icon: "/logo_transparent.png",
-    apple: "/logo_transparent.png",
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-128.png", sizes: "128x128", type: "image/png" },
+    ],
+    apple: "/icon-128.png",
   },
 };
 
