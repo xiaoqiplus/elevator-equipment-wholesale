@@ -4,10 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Menu, X, Phone, Mail, ChevronDown } from "lucide-react";
+import { useSiteConfig } from "@/lib/site-config-context";
 
 export default function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const cfg = useSiteConfig();
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -28,14 +30,14 @@ export default function Header() {
       <div className="hidden border-b bg-slate-800 md:block">
         <div className="container mx-auto flex h-9 items-center justify-between px-4">
           <div className="flex items-center gap-4 text-xs text-slate-300">
-            <a href="mailto:info@quickeaseliftparts.com" className="flex items-center gap-1 hover:text-white transition-colors">
-              <Mail className="h-3 w-3" /> info@quickeaseliftparts.com
+            <a href={`mailto:${cfg.contact_email}`} className="flex items-center gap-1 hover:text-white transition-colors">
+              <Mail className="h-3 w-3" /> {cfg.contact_email}
             </a>
-            <a href="tel:+8613335386941" className="flex items-center gap-1 hover:text-white transition-colors">
-              <Phone className="h-3 w-3" /> +86 13335386941
+            <a href={`tel:${cfg.contact_phone}`} className="flex items-center gap-1 hover:text-white transition-colors">
+              <Phone className="h-3 w-3" /> {cfg.contact_phone}
             </a>
           </div>
-          <a href="https://wa.me/8613335386941" target="_blank" className="text-xs text-green-400 hover:text-green-300 transition-colors">
+          <a href={`https://wa.me/${cfg.contact_whatsapp?.replace(/[^0-9]/g, "")}`} target="_blank" className="text-xs text-green-400 hover:text-green-300 transition-colors">
             💬 WhatsApp
           </a>
         </div>

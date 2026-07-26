@@ -1,11 +1,15 @@
 "use client";
 
+import { useSiteConfig } from "@/lib/site-config-context";
+
 export default function FloatingContact() {
+  const cfg = useSiteConfig();
+  const wa = cfg.contact_whatsapp?.replace(/[^0-9]/g, "");
   return (
     <div className="fixed right-6 top-1/2 z-50 flex -translate-y-1/2 flex-col gap-3">
       {/* WhatsApp */}
       <a
-        href="https://wa.me/8613335386941"
+        href={`https://wa.me/${wa}`}
         target="_blank"
         rel="noopener noreferrer"
         className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-2xl text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
@@ -18,7 +22,7 @@ export default function FloatingContact() {
 
       {/* Email */}
       <a
-        href="mailto:info@quickeaseliftparts.com"
+        href={`mailto:${cfg.contact_email}`}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 text-xl text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
         title="Email Us"
       >
@@ -29,7 +33,7 @@ export default function FloatingContact() {
 
       {/* Phone */}
       <a
-        href="tel:+8613335386941"
+        href={`tel:${cfg.contact_phone}`}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-xl text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl"
         title="Call Us"
       >

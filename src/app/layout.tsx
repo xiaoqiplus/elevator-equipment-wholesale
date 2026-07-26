@@ -8,6 +8,7 @@ import "swiper/css/pagination";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AOSProvider from "@/components/AOSProvider";
+import { SiteConfigProvider } from "@/lib/site-config-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -50,10 +51,12 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body className={`${inter.className} flex min-h-screen flex-col`}>
         <AOSProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <FloatingContact />
+          <SiteConfigProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <FloatingContact />
+          </SiteConfigProvider>
         </AOSProvider>
       </body>
     </html>
