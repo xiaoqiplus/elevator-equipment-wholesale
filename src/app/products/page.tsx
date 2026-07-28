@@ -22,7 +22,7 @@ export default async function ProductsPage({
 }) {
   const view = searchParams.view === "brands" ? "brands" : "categories";
   const q = (searchParams.q || "").trim();
-  const whereName = q ? { name: { contains: q, mode: "insensitive" as const } } : {};
+  const whereName = q ? { name: { contains: q } } : {};
 
   // 分类视图
   if (view === "brands") {
@@ -40,9 +40,8 @@ export default async function ProductsPage({
         </section>
         <section className="container mx-auto px-4 py-10">
           <div className="mx-auto mb-8 max-w-xl">
-            <form action="/products" method="GET" className="relative">
-              <input type="hidden" name="view" value="brands" />
-              <input type="text" name="q" defaultValue={q} placeholder="Search brands..."
+            <form action="/search" method="GET" className="relative">
+              <input type="text" name="q" defaultValue={q} placeholder="Search products..."
                 className="h-12 w-full rounded-lg border border-slate-300 bg-white px-4 pr-12 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" />
               <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -94,8 +93,8 @@ export default async function ProductsPage({
       </section>
       <section className="container mx-auto px-4 py-10">
         <div className="mx-auto mb-8 max-w-xl">
-          <form action="/products" method="GET" className="relative">
-            <input type="text" name="q" defaultValue={q} placeholder="Search categories..."
+            <form action="/search" method="GET" className="relative">
+            <input type="text" name="q" defaultValue={q} placeholder="Search products..."
               className="h-12 w-full rounded-lg border border-slate-300 bg-white px-4 pr-12 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500" />
             <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
