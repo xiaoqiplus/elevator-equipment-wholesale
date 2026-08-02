@@ -38,6 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navLinks = [
     { href: "/admin", label: "概览", icon: "📊" },
     { href: "/admin/products", label: "产品管理", icon: "📦" },
+    { href: "/admin/brands", label: "品牌管理", icon: "🏷️" },
     { href: "/admin/uploads", label: "上传图片", icon: "📤" },
     { href: "/admin/knowledge", label: "知识管理", icon: "📚" },
     { href: "/admin/about", label: "关于我们", icon: "✏️" },
