@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
+import { getFirstProductImageByCategory } from "@/lib/category-thumbs";
 
 export const metadata: Metadata = { title: "QuickEase Lift Parts - Elevator Parts Supplier" };
 
@@ -27,20 +28,14 @@ export default async function Home() {
     include: { products: { take: 1, select: { images: true }, orderBy: { name: "asc" } } },
     orderBy: { name: "asc" },
   });
-  // 每个分类取第一个有图产品作为缩略图
-  const categories = await Promise.all(
-    categoriesRaw.map(async (cat) => {
-      const allImgs = await prisma.product.findMany({
-        where: { categoryId: cat.id },
-        orderBy: { name: "asc" },
-        select: { images: true },
-      });
-      const firstWithImg = allImgs.find(
-        (p) => Array.isArray(p.images) && p.images.length > 0,
-      );
-      return { ...cat, firstWithImg };
-    }),
-  );
+  // 每个分类取第一个有图产品作为缩略图（一次查询，内存分组）
+  const firstImgByCat = await getFirstProductImageByCategory();
+  const categories = categoriesRaw.map((cat) => ({
+    ...cat,
+    firstWithImg: firstImgByCat.get(cat.id)
+      ? { images: firstImgByCat.get(cat.id) }
+      : null,
+  }));
   const hotProducts: any[] = [];
   for (const sku of HOT_SKUS) {
     const p = await prisma.product.findUnique({ where: { sku }, include: { category: true, brand: true } });

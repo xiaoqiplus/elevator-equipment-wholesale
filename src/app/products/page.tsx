@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getFirstProductImageByCategory } from "@/lib/category-thumbs";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -90,20 +91,14 @@ export default async function ProductsPage({
     orderBy: { products: { _count: "desc" } },
   });
 
-  // 取每个分类第一个有图产品作为缩略图（优先有图的，避免无图产品占位）
-  const categories = await Promise.all(
-    categoriesRaw.map(async (cat) => {
-      const allImgs = await prisma.product.findMany({
-        where: { categoryId: cat.id },
-        orderBy: { name: "asc" },
-        select: { images: true },
-      });
-      const firstWithImg = allImgs.find(
-        (p) => Array.isArray(p.images) && p.images.length > 0,
-      );
-      return { ...cat, firstWithImg };
-    }),
-  );
+  // 每个分类取第一个有图产品作为缩略图（一次查询，内存分组）
+  const firstImgByCat = await getFirstProductImageByCategory();
+  const categories = categoriesRaw.map((cat) => ({
+    ...cat,
+    firstWithImg: firstImgByCat.get(cat.id)
+      ? { images: firstImgByCat.get(cat.id) }
+      : null,
+  }));
 
   return (
     <div>
