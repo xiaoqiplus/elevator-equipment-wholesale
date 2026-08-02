@@ -54,7 +54,7 @@ export async function GET() {
   }
 
   // 收集归入其他的品牌 slug
-  const allOtherSlugs = [...new Set([...OTHER_LIST, ...KUBLER_AFTER])];
+  const allOtherSlugs = Array.from(new Set([...OTHER_LIST, ...KUBLER_AFTER]));
   results.toOther = [];
   for (const slug of allOtherSlugs) {
     const b = await prisma.brand.findUnique({ where: { slug } });
