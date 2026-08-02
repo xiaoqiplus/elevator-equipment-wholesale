@@ -26,11 +26,16 @@ export default async function ProductsPage({
 
   // 分类视图
   if (view === "brands") {
-    const brands = await prisma.brand.findMany({
+    const brandsRaw = await prisma.brand.findMany({
       where: whereName,
       include: { _count: { select: { products: true } } },
       orderBy: { products: { _count: "desc" } },
     });
+    // Others 排最后
+    const brands = [
+      ...brandsRaw.filter((b) => b.slug !== "other"),
+      ...brandsRaw.filter((b) => b.slug === "other"),
+    ];
 
     return (
       <div>
@@ -76,7 +81,7 @@ export default async function ProductsPage({
   }
 
   // 分类视图
-  const categories = await prisma.category.findMany({
+  const categoriesRaw = await prisma.category.findMany({
     where: whereName,
     include: {
       products: { take: 1, select: { images: true }, orderBy: { name: "asc" } },
@@ -84,6 +89,21 @@ export default async function ProductsPage({
     },
     orderBy: { products: { _count: "desc" } },
   });
+
+  // 取每个分类第一个有图产品作为缩略图（优先有图的，避免无图产品占位）
+  const categories = await Promise.all(
+    categoriesRaw.map(async (cat) => {
+      const allImgs = await prisma.product.findMany({
+        where: { categoryId: cat.id },
+        orderBy: { name: "asc" },
+        select: { images: true },
+      });
+      const firstWithImg = allImgs.find(
+        (p) => Array.isArray(p.images) && p.images.length > 0,
+      );
+      return { ...cat, firstWithImg };
+    }),
+  );
 
   return (
     <div>
@@ -115,8 +135,8 @@ export default async function ProductsPage({
             <Link key={cat.id} href={`/categories/${cat.slug}`}>
               <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                 <div className="aspect-video bg-slate-50 flex items-center justify-center overflow-hidden">
-                  {Array.isArray(cat.products[0]?.images) && cat.products[0].images[0] ? (
-                    <img src={cat.products[0].images[0] as string} alt={cat.name} className="h-full w-full object-cover" />
+                  {Array.isArray(cat.firstWithImg?.images) && cat.firstWithImg.images[0] ? (
+                    <img src={cat.firstWithImg.images[0] as string} alt={cat.name} className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-3xl text-slate-300">📦</span>
                   )}

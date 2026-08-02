@@ -23,16 +23,37 @@ const HOT_SKUS = [
 ];
 
 export default async function Home() {
-  const categories = await prisma.category.findMany({
+  const categoriesRaw = await prisma.category.findMany({
     include: { products: { take: 1, select: { images: true }, orderBy: { name: "asc" } } },
     orderBy: { name: "asc" },
   });
+  // 每个分类取第一个有图产品作为缩略图
+  const categories = await Promise.all(
+    categoriesRaw.map(async (cat) => {
+      const allImgs = await prisma.product.findMany({
+        where: { categoryId: cat.id },
+        orderBy: { name: "asc" },
+        select: { images: true },
+      });
+      const firstWithImg = allImgs.find(
+        (p) => Array.isArray(p.images) && p.images.length > 0,
+      );
+      return { ...cat, firstWithImg };
+    }),
+  );
   const hotProducts: any[] = [];
   for (const sku of HOT_SKUS) {
     const p = await prisma.product.findUnique({ where: { sku }, include: { category: true, brand: true } });
     if (p) hotProducts.push(p);
   }
   const knowledgeArticles = await prisma.knowledge.findMany({ orderBy: { createdAt: "desc" }, take: 4 });
+  // Top Brands — 动态查询，Others 排除，取前 12
+  const topBrands = await prisma.brand.findMany({
+    where: { slug: { not: "other" } },
+    include: { _count: { select: { products: true } } },
+    orderBy: { products: { _count: "desc" } },
+    take: 12,
+  });
 
   return (
     <div>
@@ -140,8 +161,8 @@ export default async function Home() {
               <Link key={cat.id} href={`/categories/${cat.slug}`}>
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-0.5">
                   <div className="aspect-video bg-slate-100 overflow-hidden">
-                    {Array.isArray(cat.products[0]?.images) && cat.products[0].images[0] ? (
-                      <img src={cat.products[0].images[0] as string} alt={cat.name}
+                    {Array.isArray(cat.firstWithImg?.images) && cat.firstWithImg.images[0] ? (
+                      <img src={cat.firstWithImg.images[0] as string} alt={cat.name}
                         className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-2xl text-slate-300">📦</div>
@@ -163,27 +184,14 @@ export default async function Home() {
           <h4 className="mb-2 text-2xl font-bold text-slate-800">Top Brands</h4>
           <p className="mb-10 text-sm text-slate-400">Elevator Parts for All Major Manufacturers</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            {[
-              { name: "Mitsubishi", slug: "mitsubishi", count: 137 },
-              { name: "KONE", slug: "kone", count: 121 },
-              { name: "Otis", slug: "otis", count: 85 },
-              { name: "TKE", slug: "tke", count: 36 },
-              { name: "XIZI OTIS", slug: "xizi-otis", count: 31 },
-              { name: "Monarch", slug: "monarch", count: 29 },
-              { name: "HITACHI", slug: "hitachi", count: 22 },
-              { name: "Hyundai", slug: "hyundai", count: 19 },
-              { name: "ThyssenKrupp", slug: "thyssenkrupp", count: 19 },
-              { name: "SIGMA", slug: "sigma", count: 16 },
-              { name: "Fujitec", slug: "fujitec", count: 15 },
-              { name: "Toshiba", slug: "toshiba", count: 12 },
-            ].map((brand) => (
+            {topBrands.map((brand) => (
               <Link key={brand.slug} href={`/brands/${brand.slug}`}
                 className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:shadow-md hover:-translate-y-0.5">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600">
                   {brand.name[0]}
                 </span>
                 <span>{brand.name}</span>
-                <span className="text-xs text-slate-400">({brand.count})</span>
+                <span className="text-xs text-slate-400">({brand._count.products})</span>
               </Link>
             ))}
           </div>
