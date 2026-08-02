@@ -19,7 +19,8 @@ export async function getFirstProductImageByCategory(): Promise<
     if (!p.categoryId) continue;
     if (map.has(p.categoryId)) continue;
     if (Array.isArray(p.images) && p.images.length > 0) {
-      map.set(p.categoryId, p.images);
+      const imgs = p.images.filter((img): img is string => typeof img === "string");
+      if (imgs.length > 0) map.set(p.categoryId, imgs);
     }
   }
   return map;
