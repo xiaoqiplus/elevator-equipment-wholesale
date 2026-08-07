@@ -167,17 +167,17 @@ export async function PUT(req: NextRequest) {
     const updated = await prisma.product.update({
       where: { id: product.id },
       data: {
-        sku: targetSku,
-        name,
-        description: description || null,
-        categoryId: category?.id || null,
-        brandId: brand?.id || null,
-        images: images || [],
-        specs: specs || null,
-        warranty: warranty || null,
-        leadTime: leadTime || null,
-        payment: payment || null,
-        isHot: isHot ?? product.isHot,
+        ...(sku !== undefined ? { sku: targetSku } : {}),
+        ...(name !== undefined ? { name } : {}),
+        ...(description !== undefined ? { description: description || null } : {}),
+        ...(categorySlug !== undefined ? { categoryId: category?.id || null } : {}),
+        ...(brandSlug !== undefined ? { brandId: brand?.id || null } : {}),
+        ...(images !== undefined ? { images: images || [] } : {}),
+        ...(specs !== undefined ? { specs: specs || null } : {}),
+        ...(warranty !== undefined ? { warranty: warranty || null } : {}),
+        ...(leadTime !== undefined ? { leadTime: leadTime || null } : {}),
+        ...(payment !== undefined ? { payment: payment || null } : {}),
+        ...(isHot !== undefined ? { isHot: isHot ?? product.isHot } : {}),
       },
     });
 
