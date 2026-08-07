@@ -57,6 +57,10 @@ model Product {
   brandId     String?
   images      Json
   specs       Json?
+  warranty    String?
+  leadTime    String?
+  payment     String?
+  isHot       Boolean   @default(false)
 
   category  Category?  @relation(fields: [categoryId], references: [id])
   brand     Brand?     @relation(fields: [brandId], references: [id])

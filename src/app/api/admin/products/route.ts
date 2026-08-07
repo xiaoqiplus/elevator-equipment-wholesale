@@ -43,7 +43,13 @@ export async function GET(req: NextRequest) {
       select: {
         sku: true,
         name: true,
+        description: true,
         images: true,
+        specs: true,
+        warranty: true,
+        leadTime: true,
+        payment: true,
+        isHot: true,
         category: { select: { name: true } },
         brand: { select: { name: true } },
         createdAt: true,
@@ -74,7 +80,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const { sku, name, description, categorySlug, brandSlug, images, specs } = data;
+    const { sku, name, description, categorySlug, brandSlug, images, specs, warranty, leadTime, payment, isHot } = data;
 
     if (!sku || !name) {
       return NextResponse.json({ error: "SKU 和名称不能为空" }, { status: 400 });
@@ -103,6 +109,10 @@ export async function POST(req: NextRequest) {
         brandId: brand?.id || null,
         images: images || [],
         specs: specs || null,
+        warranty: warranty || null,
+        leadTime: leadTime || null,
+        payment: payment || null,
+        isHot: isHot ?? false,
       },
     });
 
@@ -120,7 +130,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     const data = await req.json();
-    const { sku, newSku, name, description, categorySlug, brandSlug, images, specs } = data;
+    const { sku, newSku, name, description, categorySlug, brandSlug, images, specs, warranty, leadTime, payment, isHot } = data;
 
     if (!sku) {
       return NextResponse.json({ error: "SKU 不能为空" }, { status: 400 });
@@ -164,6 +174,10 @@ export async function PUT(req: NextRequest) {
         brandId: brand?.id || null,
         images: images || [],
         specs: specs || null,
+        warranty: warranty || null,
+        leadTime: leadTime || null,
+        payment: payment || null,
+        isHot: isHot ?? product.isHot,
       },
     });
 

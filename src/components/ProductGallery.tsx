@@ -19,8 +19,8 @@ export default function ProductGallery({ images, name }: Props) {
   }
 
   return (
-    <div>
-      <div className="mb-4 overflow-hidden rounded-lg border bg-slate-50">
+    <div className="w-1/2 max-w-[420px]">
+      <div className="mb-3 overflow-hidden rounded-lg border bg-slate-50">
         <img
           src={images[activeIndex]}
           alt={`${name} ${activeIndex + 1}`}
@@ -34,7 +34,7 @@ export default function ProductGallery({ images, name }: Props) {
             <button
               key={i}
               onClick={() => setActiveIndex(i)}
-              className={`h-16 w-16 flex-shrink-0 overflow-hidden rounded border transition-all ${
+              className={`h-14 w-14 flex-shrink-0 overflow-hidden rounded border transition-all ${
                 i === activeIndex
                   ? "border-slate-800 ring-1 ring-slate-800"
                   : "border-slate-200 opacity-60 hover:opacity-100"

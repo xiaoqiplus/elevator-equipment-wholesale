@@ -20,6 +20,27 @@ async function getProduct(sku: string) {
   });
 }
 
+// 相关产品：同分类的其他产品
+async function getRelatedProducts(product: any) {
+  if (!product.categoryId) return [];
+  return prisma.product.findMany({
+    where: { categoryId: product.categoryId, sku: { not: product.sku } },
+    select: { sku: true, name: true, images: true },
+    orderBy: { name: "asc" },
+    take: 4,
+  });
+}
+
+// 热销产品：isHot=true
+async function getHotProducts(product: any) {
+  return prisma.product.findMany({
+    where: { isHot: true, sku: { not: product.sku } },
+    select: { sku: true, name: true, images: true },
+    orderBy: { updatedAt: "desc" },
+    take: 4,
+  });
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getProduct(params.sku);
   if (!product) return { title: "Product Not Found" };
@@ -56,6 +77,16 @@ export default async function ProductDetailPage({ params }: Props) {
   try { product = await getProduct(sku); } catch { /* ignore */ }
   if (!product) notFound();
 
+  // 相关产品 + 热销产品
+  let relatedProducts: any[] = [];
+  let hotProducts: any[] = [];
+  try {
+    [relatedProducts, hotProducts] = await Promise.all([
+      getRelatedProducts(product),
+      getHotProducts(product),
+    ]);
+  } catch { /* ignore */ }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Breadcrumb */}
@@ -89,12 +120,27 @@ export default async function ProductDetailPage({ params }: Props) {
 
             <Separator />
 
-            {product.description && (
+            {/* 4 行产品信息 */}
+            <div className="space-y-3">
               <div>
-                <h2 className="mb-2 text-base font-semibold text-slate-800">Description</h2>
-                <p className="text-sm text-slate-600 leading-relaxed">{product.description}</p>
+                <h2 className="mb-1 text-base font-semibold text-slate-800">Description</h2>
+                <p className="text-sm text-slate-600 leading-relaxed">{product.description || "—"}</p>
               </div>
-            )}
+              <div className="rounded-lg border border-slate-100 divide-y divide-slate-100 text-sm">
+                <div className="flex px-4 py-2.5">
+                  <span className="w-28 shrink-0 font-medium text-slate-500">Warranty</span>
+                  <span className="text-slate-800">{product.warranty || "—"}</span>
+                </div>
+                <div className="flex px-4 py-2.5">
+                  <span className="w-28 shrink-0 font-medium text-slate-500">Lead Time</span>
+                  <span className="text-slate-800">{product.leadTime || "—"}</span>
+                </div>
+                <div className="flex px-4 py-2.5">
+                  <span className="w-28 shrink-0 font-medium text-slate-500">Payment</span>
+                  <span className="text-slate-800">{product.payment || "—"}</span>
+                </div>
+              </div>
+            </div>
 
             <Separator />
 
@@ -177,6 +223,56 @@ export default async function ProductDetailPage({ params }: Props) {
           )}
         </div>
       </section>
+
+      {/* ── Related Products ── */}
+      {relatedProducts.length > 0 && (
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="mb-6 text-xl font-bold text-slate-800">Related Products</h2>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {relatedProducts.map((p) => (
+                <Link key={p.sku} href={`/products/${p.sku}`}>
+                  <div className="rounded-lg border bg-white p-3 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
+                    <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-slate-50">
+                      {Array.isArray(p.images) && p.images[0] ? (
+                        <img src={p.images[0] as string} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-3xl text-slate-300">🔧</span>
+                      )}
+                    </div>
+                    <p className="line-clamp-2 text-sm font-medium text-slate-700">{p.name}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Hot Products ── */}
+      {hotProducts.length > 0 && (
+        <section className="border-t bg-slate-50 py-12">
+          <div className="container mx-auto px-4">
+            <h2 className="mb-6 text-xl font-bold text-slate-800">🔥 Hot Products</h2>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {hotProducts.map((p) => (
+                <Link key={p.sku} href={`/products/${p.sku}`}>
+                  <div className="rounded-lg border bg-white p-3 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
+                    <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-slate-50">
+                      {Array.isArray(p.images) && p.images[0] ? (
+                        <img src={p.images[0] as string} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-3xl text-slate-300">🔧</span>
+                      )}
+                    </div>
+                    <p className="line-clamp-2 text-sm font-medium text-slate-700">{p.name}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

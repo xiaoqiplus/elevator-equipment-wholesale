@@ -21,6 +21,10 @@ export default function ProductForm({ sku }: Props) {
     brandSlug: "",
     images: [""] as string[],
     specs: [["", ""]] as [string, string][],
+    warranty: "",
+    leadTime: "",
+    payment: "",
+    isHot: false,
   });
   const [currentSku, setCurrentSku] = useState(sku || "");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -59,6 +63,10 @@ export default function ProductForm({ sku }: Props) {
               brandSlug: p.brand?.slug || "",
               images: imgs,
               specs: specsArr,
+              warranty: p.warranty || "",
+              leadTime: p.leadTime || "",
+              payment: p.payment || "",
+              isHot: !!p.isHot,
             });
           }
           setLoading(false);
@@ -118,6 +126,10 @@ export default function ProductForm({ sku }: Props) {
       brandSlug: form.brandSlug || undefined,
       images: images.length > 0 ? images : undefined,
       specs: Object.keys(specsObj).length > 0 ? specsObj : undefined,
+      warranty: form.warranty || undefined,
+      leadTime: form.leadTime || undefined,
+      payment: form.payment || undefined,
+      isHot: form.isHot,
     };
 
     try {
@@ -188,6 +200,50 @@ export default function ProductForm({ sku }: Props) {
               rows={3}
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none resize-none"
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Warranty</label>
+              <input
+                type="text"
+                value={form.warranty}
+                onChange={(e) => updateField("warranty", e.target.value)}
+                placeholder="12 months"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Lead Time</label>
+              <input
+                type="text"
+                value={form.leadTime}
+                onChange={(e) => updateField("leadTime", e.target.value)}
+                placeholder="3-5 working days"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Payment</label>
+              <input
+                type="text"
+                value={form.payment}
+                onChange={(e) => updateField("payment", e.target.value)}
+                placeholder="Western Union/PayPal/T/T"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="isHot"
+              checked={form.isHot}
+              onChange={(e) => updateField("isHot", e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300"
+            />
+            <label htmlFor="isHot" className="text-sm text-slate-700">🔥 热销产品</label>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

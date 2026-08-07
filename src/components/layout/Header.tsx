@@ -46,9 +46,8 @@ export default function Header() {
       {/* Main nav */}
       <div className="bg-slate-900 border-b border-slate-700">
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo_transparent.png" alt="QuickEase Lift Parts" className="h-8 w-auto" />
-            <span className="text-base font-bold tracking-tight text-white">QuickEase<br />Lift Parts</span>
+          <Link href="/" className="flex items-center">
+            <img src="/logo_transparent.png" alt="QuickEase Lift Parts" className="h-14 w-auto" />
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
