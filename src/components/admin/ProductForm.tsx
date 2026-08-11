@@ -43,9 +43,9 @@ export default function ProductForm({ sku }: Props) {
       setBrands(brs);
     });
 
-    // 编辑模式：加载产品数据
+    // 编辑模式：加载产品数据（按 SKU 精确查询）
     if (sku) {
-      fetch(`/api/admin/products?q=${sku}&limit=1`)
+      fetch(`/api/admin/products?sku=${encodeURIComponent(sku)}&limit=1`)
         .then((r) => r.json())
         .then((data) => {
           const p = data.products?.[0];

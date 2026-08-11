@@ -24,11 +24,14 @@ export async function GET(req: NextRequest) {
 
   const url = new URL(req.url);
   const q = url.searchParams.get("q") || "";
+  const exactSku = url.searchParams.get("sku") || "";
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1"));
   const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50")));
   const skip = (page - 1) * limit;
 
-  const where = q
+  const where = exactSku
+    ? { sku: exactSku }
+    : q
     ? {
         OR: [
           { name: { contains: q } },
@@ -50,8 +53,8 @@ export async function GET(req: NextRequest) {
         leadTime: true,
         payment: true,
         isHot: true,
-        category: { select: { name: true } },
-        brand: { select: { name: true } },
+        category: { select: { name: true, slug: true } },
+        brand: { select: { name: true, slug: true } },
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
