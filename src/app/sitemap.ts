@@ -1,6 +1,9 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
+// sitemap 始终实时生成（产品新增后立即反映），不缓存
+export const revalidate = 0;
+
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://quickeaseliftparts.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
