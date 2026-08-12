@@ -102,7 +102,7 @@ export default async function ProductDetailPage({ params }: Props) {
       </div>
 
       <section className="container mx-auto px-4 py-10">
-        <div className="grid gap-8 lg:grid-cols-[200px_1fr_320px]">
+        <div className="grid gap-8 lg:grid-cols-[400px_1fr_320px]">
           {/* ── Left: Images ── */}
           <ProductGallery images={Array.isArray(product.images) ? product.images : []} name={product.name} />
 
@@ -235,7 +235,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   <div className="rounded-lg border bg-white p-3 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
                     <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-slate-50">
                       {Array.isArray(p.images) && p.images[0] ? (
-                        <img src={p.images[0] as string} alt={p.name} className="h-full w-full object-cover" />
+                        <img src={p.images[0] as string} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-3xl text-slate-300">🔧</span>
                       )}
@@ -260,7 +260,7 @@ export default async function ProductDetailPage({ params }: Props) {
                   <div className="rounded-lg border bg-white p-3 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
                     <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-slate-50">
                       {Array.isArray(p.images) && p.images[0] ? (
-                        <img src={p.images[0] as string} alt={p.name} className="h-full w-full object-cover" />
+                        <img src={p.images[0] as string} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                       ) : (
                         <span className="text-3xl text-slate-300">🔧</span>
                       )}

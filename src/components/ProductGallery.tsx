@@ -30,6 +30,8 @@ export default function ProductGallery({ images, name }: Props) {
           <img
             src={images[activeIndex]}
             alt={`${name} ${activeIndex + 1}`}
+            loading="eager"
+            fetchPriority="high"
             className="h-full w-full object-cover"
           />
         </div>
