@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { headers } from "next/headers";
 import FloatingContact from "@/components/FloatingContact";
 import "./globals.css";
 import "swiper/css";
@@ -9,6 +10,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AOSProvider from "@/components/AOSProvider";
 import { SiteConfigProvider } from "@/lib/site-config-context";
+import { recordVisit } from "@/lib/visit-log";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -42,11 +44,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 记录访问者 IP + 归属国家（失败静默，不影响页面）
+  try {
+    await recordVisit(headers());
+  } catch {
+    // 忽略
+  }
+
   return (
     <html lang="zh-CN">
       <body className={`${inter.className} flex min-h-screen flex-col`}>

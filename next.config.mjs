@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // geoip-lite 数据文件（data/*.dat）无法被 webpack 打包，保持外部 require，
+  // 运行时从 node_modules 加载（__dirname 正确指向包内 data/ 目录）
+  experimental: {
+    serverComponentsExternalPackages: ["geoip-lite"],
+  },
+
   images: {
     remotePatterns: [
       {

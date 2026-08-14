@@ -159,5 +159,8 @@ export function middleware(request: NextRequest) {
     });
   }
 
-  return NextResponse.next();
+  // 放行响应带上当前路径，供根 layout 的访问记录使用（server component 无 pathname）
+  const res = NextResponse.next();
+  res.headers.set("x-pathname", pathname);
+  return res;
 }

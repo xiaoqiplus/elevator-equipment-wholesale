@@ -154,3 +154,19 @@ model Knowledge {
   date      DateTime @default(now())
   createdAt DateTime @default(now())
 }
+
+// 访问记录：每条一个独立 IP，visitCount 累计该 IP 的页面访问次数
+// 表由 lib/visit-log.ts 的 ensureTable() 幂等创建（Hostinger 构建环境无法 prisma db push）
+model VisitLog {
+  id         Int      @id @default(autoincrement())
+  ip         String   @unique
+  country    String? // ISO 3166-1 alpha-2，如 CN/US
+  path       String   @default("/")
+  userAgent  String?
+  firstSeen  DateTime @default(now())
+  lastSeen   DateTime @default(now())
+  visitCount Int      @default(1)
+
+  @@index([country])
+  @@index([lastSeen])
+}
