@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   sku?: string; // 编辑模式传参
+  from?: string; // 来源列表页（含页码/搜索词），保存或取消后返回
 }
 
 interface Category { slug: string; name: string; }
 interface Brand { slug: string; name: string; }
 
-export default function ProductForm({ sku }: Props) {
+export default function ProductForm({ sku, from }: Props) {
   const router = useRouter();
   const isEdit = !!sku;
 
@@ -139,7 +140,7 @@ export default function ProductForm({ sku }: Props) {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        router.push("/admin/products");
+        router.push(from || "/admin/products");
       } else {
         const data = await res.json();
         setError(data.error || "保存失败");
@@ -369,7 +370,7 @@ export default function ProductForm({ sku }: Props) {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/admin/products")}
+            onClick={() => router.push(from || "/admin/products")}
             className="px-4 py-2.5 text-sm text-slate-500 hover:text-slate-700"
           >
             取消

@@ -24,6 +24,14 @@ export default function AdminProducts() {
 
   const fetchProducts = async (p: number, q: string) => {
     setLoading(true);
+    // 同步页码+搜索词到 URL（编辑返回/刷新后恢复原位置）
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams();
+      if (p > 1) params.set("page", String(p));
+      if (q) params.set("q", q);
+      const qs = params.toString();
+      window.history.replaceState(null, "", qs ? `/admin/products?${qs}` : "/admin/products");
+    }
     try {
       const res = await fetch(`/api/admin/products?page=${p}&limit=50&q=${encodeURIComponent(q)}`);
       if (res.status === 401) {
@@ -43,7 +51,18 @@ export default function AdminProducts() {
   };
 
   useEffect(() => {
-    fetchProducts(1, "");
+    // 初始状态从 URL 恢复（从编辑页返回或直接刷新时）
+    let initPage = 1;
+    let initQ = "";
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const p = parseInt(sp.get("page") || "1", 10);
+      initPage = Number.isFinite(p) && p > 0 ? p : 1;
+      initQ = sp.get("q") || "";
+    }
+    setPage(initPage);
+    setSearch(initQ);
+    fetchProducts(initPage, initQ);
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -141,7 +160,7 @@ export default function AdminProducts() {
                   <td className="px-4 py-3 text-xs text-slate-500">{p.brand?.name || "-"}</td>
                   <td className="px-4 py-3 text-right">
                     <Link
-                      href={`/admin/products/${p.sku}/edit`}
+                      href={`/admin/products/${p.sku}/edit?from=${encodeURIComponent(`/admin/products?page=${page}&q=${encodeURIComponent(search)}`)}`}
                       className="text-xs text-primary-600 hover:text-primary-700 mr-3"
                     >
                       编辑
