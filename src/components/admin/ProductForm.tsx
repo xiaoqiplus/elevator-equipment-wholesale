@@ -28,6 +28,7 @@ export default function ProductForm({ sku, from }: Props) {
     isHot: false,
   });
   const [currentSku, setCurrentSku] = useState(sku || "");
+  const [previewUrl, setPreviewUrl] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,6 +158,7 @@ export default function ProductForm({ sku, from }: Props) {
   }
 
   return (
+    <>
     <div>
       <h1 className="text-lg font-semibold text-slate-800 mb-6">
         {isEdit ? "✏️ 编辑产品" : "➕ 新增产品"}
@@ -319,7 +321,10 @@ export default function ProductForm({ sku, from }: Props) {
                 />
               </label>
               {url && (
-                <img src={url} alt="" className="w-10 h-10 object-cover rounded border shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <button type="button" onClick={() => setPreviewUrl(url)} title="点击查看大图"
+                        className="shrink-0 p-0.5 rounded border border-slate-200 hover:border-primary-400 hover:shadow-sm transition-all cursor-zoom-in">
+                  <img src={url} alt="" className="w-10 h-10 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </button>
               )}
               <button type="button" onClick={() => removeImage(idx)} className="text-red-400 hover:text-red-600 text-sm px-1 shrink-0">
                 ✕
@@ -378,5 +383,29 @@ export default function ProductForm({ sku, from }: Props) {
         </div>
       </form>
     </div>
+
+    {/* 图片大图预览（lightbox） */}
+    {previewUrl && (
+      <div
+        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out"
+        onClick={() => setPreviewUrl("")}
+      >
+        <button
+          type="button"
+          onClick={() => setPreviewUrl("")}
+          className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full bg-white/15 text-white text-lg hover:bg-white/30 transition-colors"
+          aria-label="关闭"
+        >
+          ✕
+        </button>
+        <img
+          src={previewUrl}
+          alt="图片预览"
+          className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    )}
+    </>
   );
 }
