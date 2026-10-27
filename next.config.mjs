@@ -4,6 +4,15 @@ const nextConfig = {
   // 运行时从 node_modules 加载（__dirname 正确指向包内 data/ 目录）
   experimental: {
     serverComponentsExternalPackages: ["geoip-lite"],
+    // ── Hostinger 共享主机构建容器适配（2026-10-27）──────────────────────
+    // 症状：本地 build 正常，Hostinger 上 "compiled successfully" 之后在
+    //   "Generating static pages" 阶段 worker 起线程被 OS 拒绝：
+    //   Resource temporarily unavailable (os error 11) → SIGABRT
+    // 原因：构建容器的线程/进程上限很低，Next 按 CPU 数并行 fork worker 时撞限。
+    // 对策：强制单 CPU + 关闭 worker 线程，让静态生成串行跑。
+    //   代价：构建慢一些；本地/其它环境无副作用。
+    cpus: 1,
+    workerThreads: false,
   },
 
   images: {
