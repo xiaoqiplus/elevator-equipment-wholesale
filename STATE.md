@@ -29,7 +29,7 @@
 
 | 问题 | 原实现 | 现实现 |
 |:--|:--|:--|
-| **token 可伪造**（最严重） | `token = base64("admin:<时间戳>")`，校验只做 `startsWith("admin:")` —— 无签名/无密钥/无有效期。任何人带 cookie `admin_token=YWRtaW46eA==`（= base64("admin:x")）即可通过全部 admin 接口 | `src/lib/admin-auth.ts`：HMAC-SHA256 签名 + 12h 有效期 + `timingSafeEqual` 定长比对 + 拒绝未来时间戳（>1min） |
+| **token 可伪造**（最严重） | `token = base64("admin:<时间戳>")`，校验只做 `startsWith("admin:")` —— 无签名/无密钥/无有效期。任何人自己编一个 cookie，其内容为 base64 编码的 `admin:x`，即可通过全部 admin 接口（2026-10-27 线上实测：返回完整产品数据） | `src/lib/admin-auth.ts`：HMAC-SHA256 签名 + 12h 有效期 + `timingSafeEqual` 定长比对 + 拒绝未来时间戳（>1min） |
 | 口令明文在 public 仓库 | `ADMIN_PASS = "..."` 写死在 `login/route.ts`，自 2026-07-11 提交 `537bec9` 起暴露 | 只从环境变量 `ADMIN_PASSWORD` 读；**未配置时 fail-closed**（登录返回 503，不认任何凭证） |
 
 **改动范围：** 新增 `src/lib/admin-auth.ts`；`login/route.ts` 改为签发签名 token；7 个受保护接口
@@ -43,6 +43,33 @@
 
 **仍未做：** `/api/admin/login` 无登录失败限流 —— 密码改为环境变量后，暴力猜测成为唯一攻击面。
 建议后续加（同 IP 10 次/10 分钟锁）。
+
+### 🚀 部署记录：两次构建失败后上线成功（2026-10-27 晚）
+
+| 轮次 | 结果 | 原因 / 处理 |
+|:--|:--|:--|
+| 第 1 次 | ❌ 失败 | `compiled successfully` 之后，在 **Generating static pages** 阶段 build worker 起线程被 OS 拒绝：`Resource temporarily unavailable (os error 11)` → SIGABRT。**本地永远复现不出来**（本机资源充足） |
+| 修复 | — | `next.config.mjs` 的 `experimental` 加 `cpus: 1` + `workerThreads: false` —— 静态生成串行化，不 fork 多 worker。本地验证 build 通过（299s，原 188s）。提交 `9eeebd8` |
+| 第 2 次 | ✅ 成功 | 新代码上线 |
+
+> 那个 `6ae0a8d753b48.next.config.mjs` 是 Hostinger 构建容器自己的残留，本地项目里不存在，
+> Next 也不会读带前缀的配置名 —— 不是失败原因，无需处理。
+
+**上线后实测（curl 直连线上；`middleware.ts` 第 146 行对 `/admin` 与 `/api/admin` 放行，
+所以后台接口不受 CN IP 屏蔽影响，可在国内直连验证）：**
+
+| 验证项 | 结果 |
+|:--|:--|
+| 新口令登录 | **200** `{"ok":true}` |
+| 旧口令 `zctss833423` | **401**（已失效） |
+| 伪造 cookie（内容为 base64 编码的 `admin:x`）打 products / brands / knowledge / visits / brands-merge | **全部 401** ← 原漏洞已堵死 |
+| 同一伪造 cookie 打 `site-config` | GET 返回 200 —— **这是设计如此**（该 GET 注释写明「公开，供前端展示」）；**PUT 返回 401**；线上该表当前为空（`{"ok":true,"config":{}}`），无信息泄露 |
+| 真实登录 token 打 `/api/admin/products` | 200（功能未被一刀切砍死） |
+| token 格式 | `payload.signature`，70 字节，确认为新签名格式 |
+| `/admin/messages`（本批新做的询盘列表） | **200**，41 KB，页面含「询盘」「总计」 |
+
+**结论：** 询盘列表、contact 防静默、SEO 硬伤、GA/GSC 框架、后台认证加固 —— 全部已上线。
+真机浏览器点一遍仍待响哥（以上是 HTTP 层验证，不等于肉眼验过）。
 
 ---
 
