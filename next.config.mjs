@@ -37,13 +37,14 @@ const nextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           {
             key: "Content-Security-Policy",
+            // GA4 需要放行 googletagmanager（脚本）与 google-analytics（数据上报/img beacon）
             value:
               "default-src 'self'; " +
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; " +
               "style-src 'self' 'unsafe-inline'; " +
               "img-src 'self' https: data:;" +
               "font-src 'self'; " +
-              "connect-src 'self' https://quickeaseliftparts.com; " +
+              "connect-src 'self' https://quickeaseliftparts.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; " +
               "frame-src 'none'; " +
               "object-src 'none'; " +
               "base-uri 'self'; " +

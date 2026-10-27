@@ -87,8 +87,68 @@ export default async function ProductDetailPage({ params }: Props) {
     ]);
   } catch { /* ignore */ }
 
+  const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "https://quickeaseliftparts.com";
+  const imgs = (Array.isArray(product.images) ? product.images : []).filter(Boolean).map((u: string) =>
+    String(u).startsWith("http") ? String(u) : `${BASE}${u}`
+  );
+  const desc =
+    typeof product.description === "string"
+      ? product.description.replace(/<[^>]*>/g, "").slice(0, 400)
+      : undefined;
+
+  // 产品结构化数据：有价格才给 offers（B2B 多数不标价，避免 Google 报缺 price 警告）
+  const productLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    sku: product.sku,
+    ...(desc ? { description: desc } : {}),
+    ...(imgs.length ? { image: imgs } : {}),
+    ...(product.brand ? { brand: { "@type": "Brand", name: product.brand.name } } : {}),
+    ...(product.category ? { category: product.category.name } : {}),
+    ...(product.price != null
+      ? {
+          offers: {
+            "@type": "Offer",
+            url: `${BASE}/products/${product.sku}`,
+            priceCurrency: "USD",
+            price: String(product.price),
+            availability: "https://schema.org/InStock",
+            seller: { "@type": "Organization", name: "XI'AN QUICKEASE LIFT PARTS CO., Ltd" },
+          },
+        }
+      : {}),
+  };
+
+  // 面包屑结构化数据（让搜索结果里显示 Home › Category › Product 路径）
+  const crumbs: Array<{ name: string; url: string }> = [
+    { name: "Home", url: BASE },
+    ...(product.category
+      ? [{ name: product.category.name, url: `${BASE}/categories/${product.category.slug}` }]
+      : []),
+    { name: product.name, url: `${BASE}/products/${product.sku}` },
+  ];
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: c.name,
+      item: c.url,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
       {/* Breadcrumb */}
       <div className="border-b bg-slate-50">
         <div className="container mx-auto flex h-10 items-center gap-2 px-4 text-xs text-slate-400">

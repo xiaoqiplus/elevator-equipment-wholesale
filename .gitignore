@@ -40,3 +40,6 @@ next-env.d.ts
 # Uploaded product images
 /public/uploads/*.jpg
 /public/uploads/*.png
+
+# 手工备份文件（覆盖前留底，不进仓库）
+*.bak_*

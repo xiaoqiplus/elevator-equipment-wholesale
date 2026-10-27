@@ -8,7 +8,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/admin/"],
+        // /search 是带参数的站内结果页，被抓会产生大量重复内容
+        disallow: ["/api/", "/admin/", "/search"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

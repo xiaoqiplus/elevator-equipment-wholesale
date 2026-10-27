@@ -2,6 +2,89 @@
 
 > 最后更新: 2026-05-18 20:17 CST · 会话数: 2
 
+---
+
+## 0. ⚠️ 现状校正（2026-10-27 实测，优先于下文所有内容）
+
+**本文档第 1～10 节是 2026-05-18 写的，技术栈与部署方式已全部更换。** 以下为实测现状：
+
+| 项 | 文档旧写法（过时） | 实际现状（2026-10-27 核实） |
+|:--|:--|:--|
+| 部署 | Vercel（GitHub 自动部署） | **Hostinger 共享主机**（push 到 GitHub → hPanel 自动拉取构建） |
+| 数据库 | Supabase PostgreSQL | **Hostinger MySQL**（`u899509956_elevator_db`，prisma provider = mysql） |
+| 域名 | xxx.vercel.app | **quickeaseliftparts.com**（Namesilo 注册） |
+| 邮件 | Resend | **nodemailer + Hostinger SMTP**（smtp.hostinger.com:465） |
+| 限流 | Upstash Redis | 内存限流（未接 Redis）；`/api/contact` 2026-10-27 起有进程内限流 |
+| 文件存储 | Cloudflare R2 | 本地 `public/uploads/`（6568 个 SKU 目录） |
+| 地域限制 | 无 | **CN IP 屏蔽**（`src/middleware.ts`，fail-open，仅明确判定 CN 才拦） |
+| 产品数 | 12（种子） | **3803**（其中 2474 个从 lift-spares 竞品导入） |
+| 登录 | NextAuth + Prisma Adapter | 后台是**独立简易口令**（`/api/admin/login`，admin_token cookie） |
+
+代码活的最后一个提交（截至 2026-10-27）：`f2360d9`（2026-08-18，产品图 lightbox）。
+2026-09-21 只动过协作文档机制，没动代码。
+
+### 注意：后台口令目前硬编码在源码里，且仓库是 public
+
+`src/app/api/admin/login/route.ts` 里 `ADMIN_PASS` 是明文常量，而
+GitHub 仓库 `xiaoqiplus/elevator-equipment-wholesale` 是 **public**。
+→ 任何人可读到后台密码。待处理（2026-10-27 提出，等响哥决定是否转环境变量 + 换密码）。
+
+---
+
+## 2026-10-27 本轮改动（询盘转化专项 · 第一批）
+
+起因：询盘量偏低，做漏斗三层排查（流量 → 转化 → 接住）。本批落地的是「接住」+「装眼睛」+「SEO 硬伤」。
+
+### 1. 后台能看到询盘了（原先只能靠邮件）
+
+- 新增 `src/app/admin/messages/page.tsx` —— 询盘列表：统计卡（总计/近7天/近30天/产品询价数）、
+  30 条一页倒序、产品询价解析出 SKU 并可跳产品页、一键「回复邮件」/「用 WhatsApp 跟进」、
+  顶部显示 SMTP 是否配置（未配则红字警告"必须人工巡查"）
+- `src/app/admin/layout.tsx` 侧边栏加「📨 询盘消息」（第二位）
+- `src/app/admin/page.tsx` 概览页加「询盘·最近7天」卡片 + 「最近询盘」5 条列表
+- ⚠️ 为什么重要：`ContactMessage` 表原先**只有写入没有读取**（全项目唯一引用是 api/contact），
+  而邮件通知是 best-effort，SMTP 一挂询盘就无人知晓
+
+### 2. `/api/contact` 不再静默失败
+
+- 邮件失败：改打 `[CONTACT-EMAIL-FAILED]` 前缀 + 完整询盘内容 + Message ID 到服务器日志（可人工捞回）
+- 邮件加 `replyTo` = 客户邮箱（点回复直接回到客户）
+- 邮件正文带后台路径提示 `/admin/messages`
+- 新增：邮箱格式校验、长度上限、**进程内限流**（同 IP 10 分钟 5 条，超限 429）
+- 响应新增 `emailed: boolean`（供排查；客户侧文案不变）
+
+### 3. SEO 硬伤修复
+
+- `src/app/layout.tsx`：`<html lang="zh-CN">` → **`lang="en"`**（英文站标成中文，最严重的信号错误）
+- 根 metadata `description` / `keywords` 由中文改英文；补 `metadataBase` / canonical / openGraph / twitter
+- `src/app/sitemap.ts`：补上原先漏掉的 **分类页、品牌页、知识库文章页、about、contact**
+- `src/app/robots.ts`：`disallow` 增加 `/search`（站内结果页重复内容）
+- 首页加 `Organization` 结构化数据；产品页加 `Product` + `BreadcrumbList` 结构化数据
+  （Product 的 offers 仅在数据库有 price 时输出，避免 Google 报"缺 price"警告）
+
+### 4. 流量分析接好了（等 ID）
+
+- `layout.tsx` 支持 `GA_ID` 与 `GSC_VERIFICATION` 两个环境变量，未配置则不渲染任何第三方脚本
+- ⚠️ **故意不用 `NEXT_PUBLIC_` 前缀**：那种变量构建时内联进 bundle，而 Hostinger 面板是运行时注入
+  → 用服务端变量 + SSR 输出，面板填完重启应用即生效，**不需要重新 build**
+- `next.config.mjs` 的 CSP 已放行 `googletagmanager`（脚本）与 `google-analytics`（上报）
+- `.env.example` 重写：删掉 Supabase/Resend/R2/Upstash 等废弃项，补 GA_ID / GSC_VERIFICATION / ADMIN_PASSWORD
+
+### 验证状态（诚实标注）
+
+- ✅ `npx tsc --noEmit` 零错误
+- ✅ `pnpm build` 成功，`.next/server/app/admin/messages/page.js` 产物存在
+- ❌ **未在真机点过**：本地 `.env` 指向 `localhost:3306`，本机没有那个 MySQL，
+  连不上线上库 → 页面渲染与询盘写入**尚未在真实环境验证**。上线后需实测。
+
+### 下一批（未做）
+
+转化层：表单失败提示（`ProductInquiryForm.tsx:34`、`contact/page.tsx:26` 目前失败无任何提示）、
+询价表单加 Qty/Company 字段、客户自动回复邮件、首页四条"为什么选我们"换成带数字的承诺、
+Footer 补公司全名/详细地址/认证/内链、产品页 MOQ 与起订量锚点。
+
+---
+
 ## 1. 项目概览
 
 电梯零件 B2B 电商网站。技术栈：Next.js 14 + TypeScript + Tailwind + shadcn/ui + Prisma + Supabase + NextAuth v5 + Zustand。
