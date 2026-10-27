@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkAdminAuth } from "@/lib/admin-auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 
 export const dynamic = 'force-dynamic';
-
-function checkAuth(req: NextRequest): boolean {
-  const token = req.cookies.get("admin_token")?.value;
-  if (!token) return false;
-  try {
-    return Buffer.from(token, "base64").toString().startsWith("admin:");
-  } catch {
-    return false;
-  }
-}
 
 const WATERMARK_PATH = path.join(process.cwd(), "public", "logo-watermark.png");
 
@@ -52,7 +43,7 @@ async function addWatermark(buffer: Buffer): Promise<Buffer> {
 }
 
 export async function POST(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!checkAdminAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

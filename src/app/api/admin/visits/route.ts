@@ -1,23 +1,14 @@
 import { prisma } from "@/lib/prisma";
+import { checkAdminAuth } from "@/lib/admin-auth";
 import { ensureVisitLogTable } from "@/lib/visit-log";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-function checkAuth(req: NextRequest): boolean {
-  const token = req.cookies.get("admin_token")?.value;
-  if (!token) return false;
-  try {
-    return Buffer.from(token, "base64").toString().startsWith("admin:");
-  } catch {
-    return false;
-  }
-}
-
 // GET /api/admin/visits — 访问统计（IP 归属地列表 + 国家分布）
 // 参数: page, limit, country=CN, q=IP前缀, range=小时数(0=全部)
 export async function GET(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!checkAdminAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     await ensureVisitLogTable();

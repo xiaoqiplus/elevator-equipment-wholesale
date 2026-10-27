@@ -1,21 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { checkAdminAuth } from "@/lib/admin-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-function checkAuth(req: NextRequest): boolean {
-  const token = req.cookies.get("admin_token")?.value;
-  if (!token) return false;
-  try {
-    return Buffer.from(token, "base64").toString().startsWith("admin:");
-  } catch {
-    return false;
-  }
-}
-
 // GET /api/admin/brands — 品牌列表（含产品数）
 export async function GET(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!checkAdminAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const url = new URL(req.url);
   const q = url.searchParams.get("q") || "";
@@ -39,7 +30,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/admin/brands — 新增品牌
 export async function POST(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!checkAdminAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const data = await req.json();
@@ -60,7 +51,7 @@ export async function POST(req: NextRequest) {
 
 // PUT /api/admin/brands — 编辑品牌（改名/改slug）
 export async function PUT(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!checkAdminAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const data = await req.json();
@@ -89,7 +80,7 @@ export async function PUT(req: NextRequest) {
 
 // DELETE /api/admin/brands?id=xxx — 删除品牌（仅产品数为0时）
 export async function DELETE(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!checkAdminAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const id = req.nextUrl.searchParams.get("id");

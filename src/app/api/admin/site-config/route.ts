@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { checkAdminAuth } from "@/lib/admin-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
@@ -17,16 +18,6 @@ async function ensureTable() {
     `);
   } catch {
     // 表已存在则静默跳过
-  }
-}
-
-function checkAuth(req: NextRequest): boolean {
-  const token = req.cookies.get("admin_token")?.value;
-  if (!token) return false;
-  try {
-    return Buffer.from(token, "base64").toString().startsWith("admin:");
-  } catch {
-    return false;
   }
 }
 
@@ -50,7 +41,7 @@ export async function GET() {
 
 // PUT /api/admin/site-config — 批量更新配置（需登录）
 export async function PUT(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!checkAdminAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   await ensureTable();

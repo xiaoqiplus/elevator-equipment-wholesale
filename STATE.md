@@ -18,16 +18,31 @@
 | 文件存储 | Cloudflare R2 | 本地 `public/uploads/`（6568 个 SKU 目录） |
 | 地域限制 | 无 | **CN IP 屏蔽**（`src/middleware.ts`，fail-open，仅明确判定 CN 才拦） |
 | 产品数 | 12（种子） | **3803**（其中 2474 个从 lift-spares 竞品导入） |
-| 登录 | NextAuth + Prisma Adapter | 后台是**独立简易口令**（`/api/admin/login`，admin_token cookie） |
+| 登录 | NextAuth + Prisma Adapter | 后台是**独立口令登录**（`/api/admin/login`），2026-10-27 起为 HMAC 签名 token + 环境变量口令（详见下方「后台认证已加固」） |
 
 代码活的最后一个提交（截至 2026-10-27）：`f2360d9`（2026-08-18，产品图 lightbox）。
 2026-09-21 只动过协作文档机制，没动代码。
 
-### 注意：后台口令目前硬编码在源码里，且仓库是 public
+### ✅ 后台认证已加固（2026-10-27 15:32 修复，上一版此处是「待处理」）
 
-`src/app/api/admin/login/route.ts` 里 `ADMIN_PASS` 是明文常量，而
-GitHub 仓库 `xiaoqiplus/elevator-equipment-wholesale` 是 **public**。
-→ 任何人可读到后台密码。待处理（2026-10-27 提出，等响哥决定是否转环境变量 + 换密码）。
+**修的两个问题（原状态已作废）：**
+
+| 问题 | 原实现 | 现实现 |
+|:--|:--|:--|
+| **token 可伪造**（最严重） | `token = base64("admin:<时间戳>")`，校验只做 `startsWith("admin:")` —— 无签名/无密钥/无有效期。任何人带 cookie `admin_token=YWRtaW46eA==`（= base64("admin:x")）即可通过全部 admin 接口 | `src/lib/admin-auth.ts`：HMAC-SHA256 签名 + 12h 有效期 + `timingSafeEqual` 定长比对 + 拒绝未来时间戳（>1min） |
+| 口令明文在 public 仓库 | `ADMIN_PASS = "..."` 写死在 `login/route.ts`，自 2026-07-11 提交 `537bec9` 起暴露 | 只从环境变量 `ADMIN_PASSWORD` 读；**未配置时 fail-closed**（登录返回 503，不认任何凭证） |
+
+**改动范围：** 新增 `src/lib/admin-auth.ts`；`login/route.ts` 改为签发签名 token；7 个受保护接口
+（`products` / `brands` / `brands/merge` / `knowledge` / `site-config` / `upload` / `visits`）统一改用
+`checkAdminAuth()`，旧的 `startsWith("admin:")` 校验已无残留。
+
+**密钥派生：** `ADMIN_SECRET` 优先，未设则用 `ADMIN_PASSWORD` —— 即**改口令自动吊销所有旧会话**。
+
+**部署前提（顺序不能反）：** 新代码是 fail-closed，服务器环境变量里必须先有 `ADMIN_PASSWORD`，
+再推送代码。否则后台直接锁死（登录 503）。响哥已于 2026-10-27 在 Hostinger 面板添加。
+
+**仍未做：** `/api/admin/login` 无登录失败限流 —— 密码改为环境变量后，暴力猜测成为唯一攻击面。
+建议后续加（同 IP 10 次/10 分钟锁）。
 
 ---
 

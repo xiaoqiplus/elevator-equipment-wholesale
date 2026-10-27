@@ -1,21 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { checkAdminAuth } from "@/lib/admin-auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-function checkAuth(req: NextRequest): boolean {
-  const token = req.cookies.get("admin_token")?.value;
-  if (!token) return false;
-  try {
-    return Buffer.from(token, "base64").toString().startsWith("admin:");
-  } catch {
-    return false;
-  }
-}
-
 // POST /api/admin/brands/merge — 合并品牌：把 fromId 的产品归到 toId，然后删除 fromId
 export async function POST(req: NextRequest) {
-  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!checkAdminAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const data = await req.json();

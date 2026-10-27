@@ -1,22 +1,37 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import {
+  ADMIN_USERNAME,
+  ADMIN_TOKEN_MAX_AGE_SEC,
+  createAdminToken,
+  getAdminPassword,
+} from "@/lib/admin-auth";
 
-export const dynamic = 'force-dynamic';
-
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "zctss833423";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  // 口令只从环境变量读（原先明文硬编码在本文件里，且仓库是 public）
+  const expected = getAdminPassword();
+  if (!expected) {
+    return NextResponse.json(
+      {
+        error:
+          "后台口令未配置：请在 Hostinger 面板的环境变量里设置 ADMIN_PASSWORD，然后重启应用。",
+      },
+      { status: 503 }
+    );
+  }
+
   try {
     const { username, password } = await req.json();
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
-      const token = Buffer.from(`admin:${Date.now()}`).toString("base64");
+    if (username === ADMIN_USERNAME && typeof password === "string" && password === expected) {
       const res = NextResponse.json({ ok: true });
-      res.cookies.set("admin_token", token, {
+      res.cookies.set("admin_token", createAdminToken(), {
         httpOnly: true,
-        maxAge: 60 * 60 * 12, // 12 hours
+        maxAge: ADMIN_TOKEN_MAX_AGE_SEC,
         path: "/",
         sameSite: "lax",
+        // 线上是 https；本地 http 开发时不加 secure，否则浏览器不保存 cookie
+        secure: process.env.NODE_ENV === "production",
       });
       return res;
     }

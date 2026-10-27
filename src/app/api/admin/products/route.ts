@@ -1,24 +1,13 @@
 import { prisma } from "@/lib/prisma";
+import { checkAdminAuth } from "@/lib/admin-auth";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 
 export const dynamic = 'force-dynamic';
 
-// 验证管理员身份（简单cookie检查）
-function checkAuth(req: NextRequest): boolean {
-  const token = req.cookies.get("admin_token")?.value;
-  if (!token) return false;
-  try {
-    const decoded = Buffer.from(token, "base64").toString();
-    return decoded.startsWith("admin:");
-  } catch {
-    return false;
-  }
-}
-
 // GET /api/admin/products — 产品列表（支持搜索、分页）
 export async function GET(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!checkAdminAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -77,7 +66,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/admin/products — 新增产品
 export async function POST(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!checkAdminAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -127,7 +116,7 @@ export async function POST(req: NextRequest) {
 
 // PUT /api/admin/products — 更新产品
 export async function PUT(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!checkAdminAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -202,7 +191,7 @@ export async function PUT(req: NextRequest) {
 
 // DELETE /api/admin/products — 删除产品
 export async function DELETE(req: NextRequest) {
-  if (!checkAuth(req)) {
+  if (!checkAdminAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
