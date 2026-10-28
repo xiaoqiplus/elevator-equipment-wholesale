@@ -112,6 +112,18 @@ libuv 线程池同理。容器 CPU 数一变、或同时有别的任务占线程
 
 **部署后怎么确认新脚本生效：** hPanel 构建日志开头应出现 `[build-next] node v... · next CLI: ...` 等三行。
 
+**✅ 已验证（2026-10-28 14:56 CST，`4f38ff6` 推送后）：** Hostinger 这次构建**成功并已发布**，
+`/api/health` 返回
+`{"buildId":"697H1atryUmN-XRp-sK3W","startedAt":"2026-10-28T06:56:27Z","uptimeSec":1,"node":"22.23.4"}`。
+同一个 buildId 可作后续部署的比对基线。上线后回归：`/admin/messages` 200(42KB)、`/admin` 200、
+`/admin/visits` 200、错口令登录 401、无 token 打 `/api/admin/products` 401、CSP 含 `googletagmanager`、
+首页仍 403（CN 屏蔽照常）。
+
+**⚠️ 由此确认的新事实：运行时 Node 也是 22.23.4**，不是只有构建容器是 22。
+`geoip-lite@2.0.3` 声明 `engines.node >= 24`，所以生产环境长期在"超范围"运行。
+`src/lib/visit-log.ts:47-56` 对 `geoip.lookup()` 做了 try/catch 返回 null，
+**失效时不会报错，只会让访问统计的 country 静默变空**——不可见，需要单独验（见遗留风险 2）。
+
 **新增部署探针 `/api/health`（本次）：** 返回 `buildId` / `startedAt` / `uptimeSec` / `node`，无敏感信息，
 已在 `middleware.ts` 对 CN 屏蔽放行。判断方法：
 - **404** → 本次构建没成功（或还没发布），线上仍是旧版
@@ -124,8 +136,10 @@ libuv 线程池同理。容器 CPU 数一变、或同时有别的任务占线程
 
 1. **依赖不可复现**：Hostinger 用 npm 装（日志 `Package manager: npm`），但仓库只有 `pnpm-lock.yaml`，
    没有 `package-lock.json` → 每次构建按 `^` 范围重新解析，某天拉到坏版本就会莫名构建失败。
-2. **`geoip-lite@2.0.3` 声明 `engines.node >= 24`**，构建容器是 Node 22（只报 EBADENGINE 警告）；
-   运行时 Node 版本未确认，访问统计的归属地解析可能降级。
+2. **`geoip-lite@2.0.3` 要求 Node ≥ 24，而线上运行时就是 Node 22.23.4**（`/api/health` 实测）。
+   lib 里没扫到 Node 24 专有 API，但它自带 `.node` 数据文件与 `engines` 声明都在提示"未验证组合"；
+   `visit-log.ts` 吞掉了异常，所以**只能靠数据反查**：看 `/admin/visits` 的国家分布是否长期全空。
+   若全空，要么升运行时到 24，要么把 geoip-lite 降到 1.4.x。
 3. **登录冷启动慢**：错口令登录首包 12.6s，疑似共享主机休眠唤醒；不影响功能，但体验差。
 
 ---
