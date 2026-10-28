@@ -73,6 +73,55 @@
 
 ---
 
+## 🔍 2026-10-28 排查：「部署失败」的真相 + 构建护栏
+
+**现象：** hPanel 里看到红字 `ERROR: Failed to build the application` / `Build failed after 1m 29s`。
+
+**真相：那是 `b599c69`（10-27 第 1 次）的旧记录，不是最新部署。** 10-28 早实测线上（国内直连）：
+
+| 验证项 | 结果 | 说明 |
+|:--|:--|:--|
+| `/admin/messages` | 200 / 42 KB | 上一批新做的询盘页在线 |
+| 错口令 POST `/api/admin/login` | **401**（不是 503） | `ADMIN_PASSWORD` 已配，后台没被 fail-closed 锁死 |
+| `/admin/login` 响应头 CSP | 含 `googletagmanager` | 线上是 10-27 之后的构建，不是旧版 |
+| 无 token GET `/api/admin/products` | 401 | 加固后的鉴权在工作 |
+| 本地 git | `main` = `origin/main` = `4d8e8ae` | 没有未推的提交 |
+
+**另一个容易误判的点：** 国内直接打开 `quickeaseliftparts.com` 会看到 `403 Access Restricted` ——
+这是**站点自己的 CN 屏蔽页**（`src/middleware.ts:126-137`），不是故障；
+`/admin` 与 `/api/admin` 在 `middleware.ts:146` 已放行，所以后台在国内能直连。
+（副作用：响哥自己打不开公开页做目测，这条以后还会反复踩——要么用海外网络，要么加个临时 IP 白名单。）
+
+**但构建脆弱性是真的，10-27 的修法不完整：**
+`experimental.cpus: 1` 只压住 **Next 进程**的并行度；panic 栈里的
+`tokio/runtime/multi_thread/worker.rs` 表明 **worker 内部的 Rust 线程池仍按容器 CPU 数开线程**，
+libuv 线程池同理。容器 CPU 数一变、或同时有别的任务占线程额度，单个 worker 也会撞上限而 SIGABRT。
+
+**本次加固：**
+
+- 新增 `scripts/build-next.mjs`：
+  - 把 `TOKIO_WORKER_THREADS=1`、`RAYON_NUM_THREADS=1`、`UV_THREADPOOL_SIZE=1` 钉死
+    （Next 的 `forkOptions.env` 会透传 `process.env`，见 `next/dist/build/index.js:309-318`，worker 子进程同样受限）
+  - 失败后自动重试（默认 3 次、间隔 15s）；EAGAIN 属瞬时资源争用，重试通常能过；
+    真正的代码错误重试照样失败，退出码原样传给 npm，不会掩盖问题
+  - 不删 `.next`：`next build` 自己清理，删了只会让重试变慢
+- `package.json`：`build` → `prisma generate && node scripts/build-next.mjs`；
+  保留 `build:plain`（原生 `next build`）供对照
+- 本地验证：`npm run build` 通过，**1 次成功 / 111s / 24-24 静态页 / 日志无告警**；
+  重试逻辑用假 next CLI 验过 3 种情况（永远失败→退出 1、第 2 次成功→退出 0、一次成功→退出 0）
+
+**部署后怎么确认新脚本生效：** hPanel 构建日志开头应出现 `[build-next] node v... · next CLI: ...` 等三行。
+
+**遗留风险（未处理，按优先级）：**
+
+1. **依赖不可复现**：Hostinger 用 npm 装（日志 `Package manager: npm`），但仓库只有 `pnpm-lock.yaml`，
+   没有 `package-lock.json` → 每次构建按 `^` 范围重新解析，某天拉到坏版本就会莫名构建失败。
+2. **`geoip-lite@2.0.3` 声明 `engines.node >= 24`**，构建容器是 Node 22（只报 EBADENGINE 警告）；
+   运行时 Node 版本未确认，访问统计的归属地解析可能降级。
+3. **登录冷启动慢**：错口令登录首包 12.6s，疑似共享主机休眠唤醒；不影响功能，但体验差。
+
+---
+
 ## 2026-10-27 本轮改动（询盘转化专项 · 第一批）
 
 起因：询盘量偏低，做漏斗三层排查（流量 → 转化 → 接住）。本批落地的是「接住」+「装眼睛」+「SEO 硬伤」。

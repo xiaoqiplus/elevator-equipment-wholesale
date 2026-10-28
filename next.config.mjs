@@ -11,6 +11,9 @@ const nextConfig = {
     // 原因：构建容器的线程/进程上限很低，Next 按 CPU 数并行 fork worker 时撞限。
     // 对策：强制单 CPU + 关闭 worker 线程，让静态生成串行跑。
     //   代价：构建慢一些；本地/其它环境无副作用。
+    // ⚠️ 这里只压住了「进程」并行度；worker 内部的 Rust(tokio/rayon) 线程池仍按
+    //   容器 CPU 数开线程，所以还要靠 scripts/build-next.mjs 把线程池钉成 1 并做失败重试。
+    //   改构建命令前请先读那个脚本的注释（2026-10-28）。
     cpus: 1,
     workerThreads: false,
   },
