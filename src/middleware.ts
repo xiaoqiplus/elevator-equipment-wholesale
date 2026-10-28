@@ -147,6 +147,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // 部署探针放行：它就是给国内核对「新代码上没上」用的，本身不含任何业务数据
+  if (pathname === "/api/health") {
+    return NextResponse.next();
+  }
+
   const ip = getClientIp(request);
   if (ip && isCnIp(ip)) {
     return new Response(BLOCKED_PAGE, {

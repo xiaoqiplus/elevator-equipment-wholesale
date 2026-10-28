@@ -112,6 +112,14 @@ libuv 线程池同理。容器 CPU 数一变、或同时有别的任务占线程
 
 **部署后怎么确认新脚本生效：** hPanel 构建日志开头应出现 `[build-next] node v... · next CLI: ...` 等三行。
 
+**新增部署探针 `/api/health`（本次）：** 返回 `buildId` / `startedAt` / `uptimeSec` / `node`，无敏感信息，
+已在 `middleware.ts` 对 CN 屏蔽放行。判断方法：
+- **404** → 本次构建没成功（或还没发布），线上仍是旧版
+- **buildId 变了** → 新构建已发布（Hostinger 每次构建重写 `.next/BUILD_ID`）
+- **startedAt 变了** → 应用进程重启过
+
+以后不必再靠 hPanel 日志猜部署结果。它同时能看出运行时 Node 版本（见遗留风险 2）。
+
 **遗留风险（未处理，按优先级）：**
 
 1. **依赖不可复现**：Hostinger 用 npm 装（日志 `Package manager: npm`），但仓库只有 `pnpm-lock.yaml`，
