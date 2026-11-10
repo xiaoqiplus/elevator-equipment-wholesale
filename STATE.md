@@ -70,6 +70,9 @@
 
 **线上验证（2026-11-10 两次部署后实测：`ipjyxrApB494f9fSjkozt` → `zgyf55djZzDXcW9Q2a5yi`）**：
 
+> 注：Hostinger 每次 push 都会重建，纯文档提交也会让 buildId 再变一次。
+> 记这里的 buildId 只用于说明「验证时跑的是哪一版」，实际以 `/api/health` 返回值为准。
+
 | 页面 | 结果 |
 |:--|:--|
 | `/about` | ✅ `canonical=https://quickeaseliftparts.com/about` |
