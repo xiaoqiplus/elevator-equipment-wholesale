@@ -68,7 +68,7 @@
 
 **遗留（与本次无关，未动）**：`src/app/__tests__/homepage.test.tsx` 有 6 条**既有失败**——Header 用例没套 `SiteConfigProvider`，Footer 用例还在找旧域名 `@quickeasylift`。`pnpm test` 因此是红的。
 
-**线上验证（2026-11-10 14:38 部署后实测，buildId `ipjyxrApB494f9fSjkozt`）**：
+**线上验证（2026-11-10 两次部署后实测：`ipjyxrApB494f9fSjkozt` → `zgyf55djZzDXcW9Q2a5yi`）**：
 
 | 页面 | 结果 |
 |:--|:--|
@@ -79,7 +79,8 @@
 | `/products` | ✅ 自指 |
 | `/search` | ✅ `robots: noindex, follow`，无 canonical |
 | `/robots.txt` | ✅ 不再 disallow `/search` |
-| `/sitemap.xml` | ✅ 3871 条（原 3875，正好少 4 条脏 URL），无 `/categories`、`/quotation`、`/login`、`/register`，无任何含空白的 URL |
+| `/sitemap.xml` | ✅ 最终 **3864** 条（3875 → 去掉 4 条脏路由 → 3871 → 再剔除 7 个 404 SKU → 3864），其中产品 3794 条；`%20` 0 条、含空白 0 条、无 `/categories`、无 `/quotation` `/login` `/register` |
+| 产品/分类/品牌页（最终构建复验） | ✅ `/products/KM964619G24`、`/categories/escalator-handrail`、`/brands/kone`、`/knowledge`、`/` 全部自指 canonical |
 | `/categories` | ✅ 仍 307 → `/products`（行为不变，只是不再进 sitemap、站内也无链接指向它） |
 
 **7 个不可达 SKU（既有问题，非本次引入）**：
