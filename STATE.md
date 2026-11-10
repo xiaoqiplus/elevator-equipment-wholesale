@@ -37,28 +37,28 @@
 | ② `/categories` 进了 sitemap | `src/app/sitemap.ts` | 该路由自 `cee5963`（2026-06-30）起就是 `redirect("/products")` 跳转壳，`f8dfd4a` 又把它加回 sitemap（priority 0.8）→ Google 抓一条报一条"网页会自动重定向"。 |
 | ③ sitemap 含 3 个不存在的路由 | `src/app/sitemap.ts` | `/quotation`、`/login`、`/register` 在 `src/app` 下没有对应目录，抓取即 404。这三个是照抄本文档第 3 节过时的路由表加进去的——**该表已一并更正**。 |
 | ④ 分类/品牌/联系页没有自己的 title | 各 `page.tsx` | 无 metadata，标题回落到站点默认标题（"Elevator Parts Supplier in China | XI'AN..."），落地页在 SERP 里毫无区分度。 |
-| ⑤ 产品 SKU 有 7 个含空格 | 数据库数据 | sitemap 原先直接拼 `product.sku`，产生 7 条非法 URL（如 `/products/QE-K-KM611085H01 `）。 |
+| ⑤ 产品 SKU 有 7 个含空格 | 数据库数据 | sitemap 原先直接拼 `product.sku`，产生 7 条非法 URL（如 `/products/QE-K-KM611085H01 `）。**线上实测：这 7 个产品的详情页本来就 404**（见下方「7 个不可达 SKU」）。 |
 
 **为什么报成「新原因」**：`f8dfd4a` 同时做了两件事——加 `canonical: "/"` **和** 把分类/品牌/知识库页首次提交进 sitemap。Google 之前几乎没抓这批页，这次批量抓取，一抓就同时命中①②，于是 GSC 立刻报"新原因"。时间线与 2026-11-09 的线上构建（buildId `Wz1qeRHzSdIVoAz2i5dy8`）吻合。
 
 **本轮改动**：
 
 - `layout.tsx`：删除 `alternates.canonical: "/"`，并留下注释禁止再加回来。
-- `sitemap.ts`：移除 `/categories`、`/quotation`、`/login`、`/register`；产品 URL 用 `encodeURIComponent` 编码。
+- `sitemap.ts`：移除 `/categories`、`/quotation`、`/login`、`/register`；产品 URL 用 `encodeURIComponent` 编码，并**跳过 7 个含空白字符、线上 404 的 SKU**（见「7 个不可达 SKU」）。
 - 各路由补自指 canonical（+ 补 title/description）：`products`、`categories/[slug]`、`brands`、`brands/[slug]`、`knowledge`、`knowledge/[id]`、`about`、`contact`（新增 `contact/layout.tsx`，因为其 page 是 client 组件）。
 - `categories/[slug]`、`brands/[slug]` 的 canonical 忽略 `?brand=` / `?category=` 过滤参数，所有筛选视图归一到分类/品牌根 URL。
 - `products/[sku]`：URL 的 SKU 与数据库规范写法不一致时 `permanentRedirect`（308）到规范地址；canonical/JSON-LD 统一走 `encodeURIComponent`。
 - `brands` 页：把指向 `/products?brand=xxx`（**该参数根本没被 `products` 页处理，等于死链**）的链接改为 `/brands/[slug]`；中文文案改英文（`品牌列表` → `Elevator Parts by Brand` 等）。
 - `search`：`metadata.robots.index = false`；同时从 `robots.ts` 的 disallow 里移除 `/search`（disallow 会让 Googlebot 看不到 noindex，已收录的搜索页删不掉）。
 - 首页：canonical 改为显式声明在 `src/app/page.tsx`（`/`），不再靠根布局兜底——根布局兜底正是这次的病根。
-- 新增回归测试 `src/app/__tests__/seo-metadata.test.ts`（10 条），锁住：根布局不得再出现 `alternates.canonical`、每个公开路由自指、`/search` noindex、sitemap 不含跳转壳/404、含空格 SKU 必须编码。
+- 新增回归测试 `src/app/__tests__/seo-metadata.test.ts`（10 条），锁住：根布局不得再出现 `alternates.canonical`、每个公开路由自指、`/search` noindex、sitemap 不含跳转壳/404/含空白 SKU。
 
 **本地验证（2026-11-10，诚实标注）**：
 
 | 项 | 结果 |
 |:--|:--|
 | `npx tsc --noEmit` | ✅ 无错误 |
-| `node scripts/build-next.mjs` | ✅ 成功，BUILD_ID `QLEZsM0zmf0OTa3kfFYyD`（脚本真实退出码 0） |
+| `node scripts/build-next.mjs` | ✅ 成功，BUILD_ID `iZF_8Od1TeUFbZUwxUqiw`（脚本真实退出码 0，全文改动后重建） |
 | `vitest run seo-metadata` | ✅ 10/10 |
 | 本地 `next start` 实测 `/about` | ✅ `canonical=https://quickeaseliftparts.com/about`（不再是首页） |
 | 本地实测 `/search` | ✅ `robots: noindex, follow`，无 canonical |
@@ -68,12 +68,41 @@
 
 **遗留（与本次无关，未动）**：`src/app/__tests__/homepage.test.tsx` 有 6 条**既有失败**——Header 用例没套 `SiteConfigProvider`，Footer 用例还在找旧域名 `@quickeasylift`。`pnpm test` 因此是红的。
 
+**线上验证（2026-11-10 14:38 部署后实测，buildId `ipjyxrApB494f9fSjkozt`）**：
+
+| 页面 | 结果 |
+|:--|:--|
+| `/about` | ✅ `canonical=https://quickeaseliftparts.com/about` |
+| `/categories/elevator-door-parts` | ✅ 自指 + 标题变成 `Elevator Door Parts — Elevator & Escalator Parts`（原先标题是站点默认） |
+| `/brands` | ✅ 自指 + `Elevator Parts by Brand`（原中文 `品牌列表`） |
+| `/brands/otis` | ✅ 自指 + `Otis Elevator Parts` |
+| `/products` | ✅ 自指 |
+| `/search` | ✅ `robots: noindex, follow`，无 canonical |
+| `/robots.txt` | ✅ 不再 disallow `/search` |
+| `/sitemap.xml` | ✅ 3871 条（原 3875，正好少 4 条脏 URL），无 `/categories`、`/quotation`、`/login`、`/register`，无任何含空白的 URL |
+| `/categories` | ✅ 仍 307 → `/products`（行为不变，只是不再进 sitemap、站内也无链接指向它） |
+
+**7 个不可达 SKU（既有问题，非本次引入）**：
+
+```
+Thyssen 3800700010          Schindler 50659077
+ELELATOR DRIVE GBA21310JC1  QE-BUTTON-KONE   KM863050G069H092
+QE-K-KM611085H01␠           QE-K-␠KM470560G01
+QE-O-HAA180DA2␠             （␠ = 尾随空格）
+```
+
+线上实测：`%20` 编码、裸空格、尾随空格、NBSP（`%C2%A0`）、全角空格（`%E3%80%80`）、窄空格（`%E2%80%AF`）**全部 404**；连"去掉空格"的写法也 404。站内搜索能查到这些产品（`sku` 字段带空格确实存在），但点进去就是 404 —— 等于 7 个产品页从未可访问。故其 canonical/索引问题无从谈起，本轮先把它们从 sitemap 移除，避免继续喂 Google 404。
+
+> 另注：实测 `/products/km964619g24`（小写）也是 404，说明该库 SKU 比较**区分大小写**。
+> 所以最初担心的「大小写变体造成重复内容」并不成立；`products/[sku]` 里的 308 归一只作为防御性兜底保留。
+
+**遗留（与本次无关，未动）**：`src/app/__tests__/homepage.test.tsx` 有 6 条**既有失败**——Header 用例没套 `SiteConfigProvider`，Footer 用例还在找旧域名 `@quickeasylift`。`pnpm test` 因此是红的。
+
 **部署后待办**：
 1. 重新提交 `sitemap.xml`，GSC 对「网页会自动重定向」点「验证修正」。
 2. 挑 3 个分类页 + 1 个品牌页点「请求编入索引」。
-3. `curl -s https://quickeaseliftparts.com/categories/elevator-door-parts | grep canonical` 应为自指。
-4. 数据清理（P3）：`SELECT sku FROM Product WHERE sku LIKE '% %'` 有 7 条带空格（含前后空格、双空格），建议 trim 后再看 canonical 是否还会抖。
-5. www 子域目前**不跳转**（实测 `https://www.quickeaseliftparts.com` 直接 200），整站 www 版本天然成为"备用网页"。建议在 hPanel 加 www → 非 www 的 301。
+3. **数据清理（P3，最划算的一步）**：后台把这 7 个 SKU 改成 URL 安全写法（空格改 `-` 或删掉），改完它们自动回到 sitemap 并可被索引。这是唯一能让这 7 个产品页真正可访问的办法。
+4. www 子域目前**不跳转**（实测 `https://www.quickeaseliftparts.com` 直接 200），整站 www 版本天然成为"备用网页"。建议在 hPanel 加 www → 非 www 的 301。
 
 ### ✅ 后台认证已加固（2026-10-27 15:32 修复，上一版此处是「待处理」）
 

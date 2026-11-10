@@ -139,11 +139,14 @@ describe("sitemap 只能提交真实存在的 URL", () => {
     expect(urls).toContain(`${HOME}/categories/elevator-door-parts`);
   });
 
-  it("产品 URL 做了编码（SKU 含空格也不会产生非法 URL）", async () => {
+  it("含空白字符的 SKU 不进 sitemap（这类页面线上实测 404）", async () => {
     const sitemap = (await import("../sitemap")).default;
     const urls = (await sitemap()).map((e: any) => e.url);
-    const spaced = urls.find((u: string) => u.includes("QE-K-KM611085H01"));
-    expect(spaced).toBe(`${HOME}/products/QE-K-KM611085H01%20`);
-    expect(urls.every((u: string) => !u.includes(" "))).toBe(true);
+    // 假数据里 QE-K-KM611085H01 带尾随空格，必须被过滤掉
+    expect(urls.some((u: string) => u.includes("QE-K-KM611085H01"))).toBe(false);
+    // 干净的 SKU 照常输出
+    expect(urls).toContain(`${HOME}/products/KM964619G24`);
+    // 任何 URL 都不该出现空白字符
+    expect(urls.every((u: string) => !/\s/.test(u))).toBe(true);
   });
 });

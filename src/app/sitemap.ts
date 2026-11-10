@@ -30,13 +30,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       select: { sku: true, updatedAt: true },
       take: 5000,
     });
-    productPages = products.map((product) => ({
-      // SKU 可能含空格/特殊字符（竞品导入），必须编码，否则 sitemap 里的 URL 是坏的
-      url: `${BASE_URL}/products/${encodeURIComponent(product.sku)}`,
-      lastModified: product.updatedAt,
-      changeFrequency: "weekly" as const,
-      priority: 0.7,
-    }));
+    productPages = products
+      // 跳过含空白字符的 SKU（2026-11-10 线上实测：共 7 个，涉及
+      // "Thyssen 3800700010"、"Schindler 50659077"、"ELELATOR DRIVE GBA21310JC1"、
+      // "QE-BUTTON-KONE   KM863050G069H092"、"QE-K-KM611085H01 "、"QE-K- KM470560G01"、
+      // "QE-O-HAA180DA2 "）。
+      // 这类 SKU 的详情页无论怎么编码（%20 / 尾随空格 / NBSP / 全角空格）都返回 404，
+      // 即产品页原本就不可达 —— 提交进 sitemap 只会让 Google 收到一堆 404，拉低 sitemap 信用。
+      // 正解是把这 7 个 SKU 在后台改成 URL 安全写法（见 STATE.md 待办），改完自动回到本表。
+      .filter((product) => !/\s/.test(product.sku))
+      .map((product) => ({
+        // 其余 SKU 仍做编码兜底（竞品导入的数据可能含保留字符）
+        url: `${BASE_URL}/products/${encodeURIComponent(product.sku)}`,
+        lastModified: product.updatedAt,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      }));
   } catch {
     // 数据库异常时产品页省略，其余页面照常输出
   }
