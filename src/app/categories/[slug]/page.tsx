@@ -5,8 +5,36 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
+import type { Metadata } from "next";
 
 export const revalidate = 60;
+
+interface Props { params: { slug: string } }
+
+// 分类页是「elevator door parts」这类商业词的最佳落地页，
+// 必须有自己的 title/description/自指 canonical。canonical 忽略 ?brand= 过滤参数，
+// 让所有筛选视图归一到分类根 URL（否则每个品牌组合都会变成一条重复内容）。
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const category = await prisma.category.findUnique({ where: { slug: params.slug } });
+  if (!category) return { title: "Category Not Found", robots: { index: false, follow: true } };
+
+  const count = await prisma.product.count({ where: { categoryId: category.id } }).catch(() => 0);
+  const description = count > 0
+    ? `${category.name}: ${count} elevator and escalator parts in stock, for Otis, Kone, Schindler, Mitsubishi, ThyssenKrupp and more. Fast worldwide dispatch, request a quote.`
+    : `${category.name} for elevators and escalators. Fast worldwide dispatch, request a quote.`;
+
+  return {
+    title: `${category.name} — Elevator & Escalator Parts`,
+    description,
+    alternates: { canonical: `/categories/${category.slug}` },
+    openGraph: {
+      title: `${category.name} — Elevator & Escalator Parts`,
+      description,
+      type: "website",
+      url: `/categories/${category.slug}`,
+    },
+  };
+}
 
 export default async function CategoryDetailPage({
   params,

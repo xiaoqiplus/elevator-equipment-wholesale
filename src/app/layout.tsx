@@ -48,7 +48,12 @@ export const metadata: Metadata = {
     "Schindler elevator parts",
     "Mitsubishi elevator parts",
   ],
-  alternates: { canonical: "/" },
+  // ⚠️ 这里【绝对不要】写 alternates.canonical。
+  // Next 的 metadata 是向下继承的：根布局一旦声明 canonical，所有没自己声明 canonical
+  // 的子页面都会输出 <link rel="canonical" href="首页">，等于主动告诉 Google
+  // 「我这个页面是首页的副本」，于是被归入「备用网页（有适当的规范标记）」并剔出索引。
+  // 2026-10-27 的 f8dfd4a 提交曾在此加过 canonical: "/"，直接导致 GSC 批量报该原因。
+  // 正确做法：每个路由在自己的 page.tsx / generateMetadata 里声明自指 canonical。
   openGraph: {
     type: "website",
     siteName: "QuickEase Lift Parts",

@@ -10,17 +10,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   // 固定页面（含分类/品牌/知识库的列表页 —— 原先漏提交，Google 只能靠自然抓取发现）
+  // ⚠️ 只放「真实存在、且 200 直出」的 URL。以下四类已被移除（2026-11-10）：
+  //   /categories —— 2026-06-30 起是 redirect("/products") 跳转壳，提交给 Google 只会报
+  //                  「网页会自动重定向」；分类列表就在 /products（view=categories）里。
+  //   /quotation、/login、/register —— src/app 下没有对应路由，会被抓成 404。
   const staticPages: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
     { url: `${BASE_URL}/products`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: `${BASE_URL}/categories`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/brands`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/knowledge`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
     { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE_URL}/quotation`, lastModified: now, changeFrequency: "monthly", priority: 0.3 },
-    { url: `${BASE_URL}/login`, lastModified: now, changeFrequency: "monthly", priority: 0.2 },
-    { url: `${BASE_URL}/register`, lastModified: now, changeFrequency: "monthly", priority: 0.2 },
   ];
 
   // 产品页
@@ -31,7 +31,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       take: 5000,
     });
     productPages = products.map((product) => ({
-      url: `${BASE_URL}/products/${product.sku}`,
+      // SKU 可能含空格/特殊字符（竞品导入），必须编码，否则 sitemap 里的 URL 是坏的
+      url: `${BASE_URL}/products/${encodeURIComponent(product.sku)}`,
       lastModified: product.updatedAt,
       changeFrequency: "weekly" as const,
       priority: 0.7,

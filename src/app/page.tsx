@@ -9,7 +9,11 @@ import { ArrowRight } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
 import { getFirstProductImageByCategory } from "@/lib/category-thumbs";
 
-export const metadata: Metadata = { title: "QuickEase Lift Parts - Elevator Parts Supplier" };
+// 首页的 canonical 只声明在首页自己身上，绝不能放进根布局（那会泄漏到全站）
+export const metadata: Metadata = {
+  title: "QuickEase Lift Parts - Elevator Parts Supplier",
+  alternates: { canonical: "/" },
+};
 
 const HOT_SKUS = [
   "ESCALATORHANDRAILBELTDISASSEMB",

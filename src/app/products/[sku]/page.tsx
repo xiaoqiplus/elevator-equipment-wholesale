@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import ProductInquiryForm from "@/components/ProductInquiryForm";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,12 @@ async function getProduct(sku: string) {
     where: { sku },
     include: { category: true, brand: true },
   });
+}
+
+// 产品规范 URL。SKU 可能含空格等需编码字符，且 MySQL 唯一索引不区分大小写 ——
+// 小写变体也能查到记录，所以必须先把 URL 归一，否则同一个产品会有多个 200 地址。
+function productPath(sku: string): string {
+  return `/products/${encodeURIComponent(sku)}`;
 }
 
 // 相关产品：同分类的其他产品
@@ -53,7 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: product.name,
       description,
-      url: `${baseUrl}/products/${product.sku}`,
+      url: `${baseUrl}${productPath(product.sku)}`,
       siteName: "Quick Easy Lift Parts",
       type: "website",
       images: Array.isArray(product.images) && product.images.length > 0
@@ -65,7 +71,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: product.name,
       description,
     },
-    alternates: { canonical: `${baseUrl}/products/${product.sku}` },
+    alternates: { canonical: `${baseUrl}${productPath(product.sku)}` },
   };
 }
 
@@ -76,6 +82,11 @@ export default async function ProductDetailPage({ params }: Props) {
   let product: any = null;
   try { product = await getProduct(sku); } catch { /* ignore */ }
   if (!product) notFound();
+
+  // URL 里的 SKU 与数据库里的规范写法不一致（大小写/编码差异）时，
+  // 直接 308 到规范地址。否则同一个产品会同时存在多个 200 地址，
+  // Google 会把非规范的那几个报成「备用网页（有适当的规范标记）」。
+  if (sku !== product.sku) permanentRedirect(productPath(product.sku));
 
   // 相关产品 + 热销产品
   let relatedProducts: any[] = [];
@@ -110,7 +121,7 @@ export default async function ProductDetailPage({ params }: Props) {
       ? {
           offers: {
             "@type": "Offer",
-            url: `${BASE}/products/${product.sku}`,
+            url: `${BASE}${productPath(product.sku)}`,
             priceCurrency: "USD",
             price: String(product.price),
             availability: "https://schema.org/InStock",
@@ -126,7 +137,7 @@ export default async function ProductDetailPage({ params }: Props) {
     ...(product.category
       ? [{ name: product.category.name, url: `${BASE}/categories/${product.category.slug}` }]
       : []),
-    { name: product.name, url: `${BASE}/products/${product.sku}` },
+    { name: product.name, url: `${BASE}${productPath(product.sku)}` },
   ];
   const breadcrumbLd = {
     "@context": "https://schema.org",

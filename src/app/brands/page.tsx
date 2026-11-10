@@ -2,6 +2,14 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Elevator Parts by Brand",
+  description:
+    "Browse elevator and escalator spare parts by manufacturer: Otis, Kone, Schindler, Mitsubishi, ThyssenKrupp, Hitachi, Fujitec and more.",
+  alternates: { canonical: "/brands" },
+};
 
 export default async function BrandsPage() {
   const brands = await prisma.brand.findMany({
@@ -11,11 +19,14 @@ export default async function BrandsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold tracking-tight">品牌列表</h1>
+      {/* 全站面向海外采购商，文案必须是英文 */}
+      <h1 className="mb-8 text-3xl font-bold tracking-tight">Elevator Parts by Brand</h1>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {brands.map((brand) => (
-          <Link key={brand.id} href={`/products?brand=${brand.slug}`}>
+          // 指向真实的品牌落地页 /brands/[slug]；
+          // 原先指 /products?brand=xxx，但 /products 根本不处理 brand 参数，等于死链
+          <Link key={brand.id} href={`/brands/${brand.slug}`}>
             <Card className="h-full transition-colors hover:bg-muted/50">
               <CardHeader>
                 <div className="mb-3 flex h-16 items-center">
@@ -35,10 +46,10 @@ export default async function BrandsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  {brand._count.products} 个产品
+                  {brand._count.products} products
                 </p>
                 <div className="mt-4 flex items-center text-sm font-medium text-primary">
-                  浏览产品 <ArrowRight className="ml-1 h-3 w-3" />
+                  View parts <ArrowRight className="ml-1 h-3 w-3" />
                 </div>
               </CardContent>
             </Card>
@@ -47,7 +58,7 @@ export default async function BrandsPage() {
       </div>
 
       {brands.length === 0 && (
-        <p className="py-10 text-center text-muted-foreground">暂无品牌</p>
+        <p className="py-10 text-center text-muted-foreground">No brands found.</p>
       )}
     </div>
   );

@@ -23,6 +23,58 @@
 代码活的最后一个提交（截至 2026-10-27）：`f2360d9`（2026-08-18，产品图 lightbox）。
 2026-09-21 只动过协作文档机制，没动代码。
 
+### 🚨 2026-11-10 Google Search Console 批量报「无法编入索引」（已修，待部署）
+
+**现象**：GSC 邮件 `[WNC-20237597]` 报两个新原因：
+1. **备用网页（有适当的规范标记）** — Alternate page with proper canonical tag
+2. **网页会自动重定向** — Page with redirect
+
+**根因（已在线上实测确认，非推测）**：
+
+| 问题 | 位置 | 说明 |
+|:--|:--|:--|
+| ① canonical 泄漏到全站 | `src/app/layout.tsx` | 2026-10-27 的 `f8dfd4a`（"SEO fixes"）在根布局加了 `alternates: { canonical: "/" }`。Next 的 metadata 向下继承，于是所有没自己声明 canonical 的页面都输出 `canonical = 首页`。实测 `/products`、`/categories/elevator-door-parts`、`/brands/otis`、`/knowledge`、`/about`、`/contact` 全部 `canonical=https://quickeaseliftparts.com`。分类页是商业词落地页，等于主动申请"别收录我"。 |
+| ② `/categories` 进了 sitemap | `src/app/sitemap.ts` | 该路由自 `cee5963`（2026-06-30）起就是 `redirect("/products")` 跳转壳，`f8dfd4a` 又把它加回 sitemap（priority 0.8）→ Google 抓一条报一条"网页会自动重定向"。 |
+| ③ sitemap 含 3 个不存在的路由 | `src/app/sitemap.ts` | `/quotation`、`/login`、`/register` 在 `src/app` 下没有对应目录，抓取即 404。这三个是照抄本文档第 3 节过时的路由表加进去的——**该表已一并更正**。 |
+| ④ 分类/品牌/联系页没有自己的 title | 各 `page.tsx` | 无 metadata，标题回落到站点默认标题（"Elevator Parts Supplier in China | XI'AN..."），落地页在 SERP 里毫无区分度。 |
+| ⑤ 产品 SKU 有 7 个含空格 | 数据库数据 | sitemap 原先直接拼 `product.sku`，产生 7 条非法 URL（如 `/products/QE-K-KM611085H01 `）。 |
+
+**为什么报成「新原因」**：`f8dfd4a` 同时做了两件事——加 `canonical: "/"` **和** 把分类/品牌/知识库页首次提交进 sitemap。Google 之前几乎没抓这批页，这次批量抓取，一抓就同时命中①②，于是 GSC 立刻报"新原因"。时间线与 2026-11-09 的线上构建（buildId `Wz1qeRHzSdIVoAz2i5dy8`）吻合。
+
+**本轮改动**：
+
+- `layout.tsx`：删除 `alternates.canonical: "/"`，并留下注释禁止再加回来。
+- `sitemap.ts`：移除 `/categories`、`/quotation`、`/login`、`/register`；产品 URL 用 `encodeURIComponent` 编码。
+- 各路由补自指 canonical（+ 补 title/description）：`products`、`categories/[slug]`、`brands`、`brands/[slug]`、`knowledge`、`knowledge/[id]`、`about`、`contact`（新增 `contact/layout.tsx`，因为其 page 是 client 组件）。
+- `categories/[slug]`、`brands/[slug]` 的 canonical 忽略 `?brand=` / `?category=` 过滤参数，所有筛选视图归一到分类/品牌根 URL。
+- `products/[sku]`：URL 的 SKU 与数据库规范写法不一致时 `permanentRedirect`（308）到规范地址；canonical/JSON-LD 统一走 `encodeURIComponent`。
+- `brands` 页：把指向 `/products?brand=xxx`（**该参数根本没被 `products` 页处理，等于死链**）的链接改为 `/brands/[slug]`；中文文案改英文（`品牌列表` → `Elevator Parts by Brand` 等）。
+- `search`：`metadata.robots.index = false`；同时从 `robots.ts` 的 disallow 里移除 `/search`（disallow 会让 Googlebot 看不到 noindex，已收录的搜索页删不掉）。
+- 首页：canonical 改为显式声明在 `src/app/page.tsx`（`/`），不再靠根布局兜底——根布局兜底正是这次的病根。
+- 新增回归测试 `src/app/__tests__/seo-metadata.test.ts`（10 条），锁住：根布局不得再出现 `alternates.canonical`、每个公开路由自指、`/search` noindex、sitemap 不含跳转壳/404、含空格 SKU 必须编码。
+
+**本地验证（2026-11-10，诚实标注）**：
+
+| 项 | 结果 |
+|:--|:--|
+| `npx tsc --noEmit` | ✅ 无错误 |
+| `node scripts/build-next.mjs` | ✅ 成功，BUILD_ID `QLEZsM0zmf0OTa3kfFYyD`（脚本真实退出码 0） |
+| `vitest run seo-metadata` | ✅ 10/10 |
+| 本地 `next start` 实测 `/about` | ✅ `canonical=https://quickeaseliftparts.com/about`（不再是首页） |
+| 本地实测 `/search` | ✅ `robots: noindex, follow`，无 canonical |
+| 本地实测 `/robots.txt` | ✅ 只剩 `Disallow: /api/`、`/admin/` |
+| 本地实测 `/sitemap.xml` | ✅ 只剩 6 条静态 URL（本地 `.env` 是占位 `localhost` 库，产品/分类/品牌/知识库查询失败被 try-catch 吞掉，所以列表为空——**这不是回归**，线上有库会照常输出） |
+| **未验证**：产品/分类/品牌页真实渲染 | ⚠️ 本地连不上数据库（真库在 Hostinger），这三类页面的 canonical 只经单测（mock prisma）验证，需部署后在线上复验 |
+
+**遗留（与本次无关，未动）**：`src/app/__tests__/homepage.test.tsx` 有 6 条**既有失败**——Header 用例没套 `SiteConfigProvider`，Footer 用例还在找旧域名 `@quickeasylift`。`pnpm test` 因此是红的。
+
+**部署后待办**：
+1. 重新提交 `sitemap.xml`，GSC 对「网页会自动重定向」点「验证修正」。
+2. 挑 3 个分类页 + 1 个品牌页点「请求编入索引」。
+3. `curl -s https://quickeaseliftparts.com/categories/elevator-door-parts | grep canonical` 应为自指。
+4. 数据清理（P3）：`SELECT sku FROM Product WHERE sku LIKE '% %'` 有 7 条带空格（含前后空格、双空格），建议 trim 后再看 canonical 是否还会抖。
+5. www 子域目前**不跳转**（实测 `https://www.quickeaseliftparts.com` 直接 200），整站 www 版本天然成为"备用网页"。建议在 hPanel 加 www → 非 www 的 301。
+
 ### ✅ 后台认证已加固（2026-10-27 15:32 修复，上一版此处是「待处理」）
 
 **修的两个问题（原状态已作废）：**
@@ -144,6 +196,64 @@ libuv 线程池同理。容器 CPU 数一变、或同时有别的任务占线程
 
 ---
 
+## 2026-10-29 内容：知识库 4 → 20 篇（16 篇新增 + 4 篇旧稿重写，**已上线**）
+
+**背景**：询盘量偏低，知识库原本只有 4 篇从竞品扒来的机翻稿（110–200 词、`•` 变「路」、标题 handrail 拼成 handraill），
+长尾搜索基本没有入口。本次按「故障诊断 + 替换选型」的采购意图写了 16 篇原创稿（901–1053 词），
+纯文本正文（对齐 `whitespace-pre-line` 渲染）。
+
+**发布结果（2026-10-29 16:3x / 17:0x 两批，走 `/api/admin/knowledge`，未改代码、未触发构建）**：
+
+| 项 | 结果 |
+|:--|:--|
+| 新增 | **16 篇**（第一批 12 + 第二批 4），全部 `200 {"ok":true}`，id 见 `content/knowledge/00-index.md` |
+| 重写旧稿 | 4 篇用 `PUT` 按原 id 覆盖；标题/摘要/正文换新，`url` 与 `images` 保留；610–714 词 |
+| 知识库总数 | **20** |
+| 页面验证 | 逐篇回读词数与源文件一致；抽查 8 篇公开页 200、H1 正确、段落空行保留、无 markdown、无 em dash、无乱码 |
+| 列表页 | 新文按 `date` 倒序排在前面；旧 4 篇标题已改为正常英文 |
+| sitemap | `src/app/sitemap.ts` 是 `revalidate = 0` 实时生成，已自动收录 20 条 `/knowledge/*`，**不需要重新构建** |
+
+**第二批选题**：门锁/门刀啮合（7 mm）、限速器与安全钳联动试验、无机房钢带、称重与超载开关。
+
+### 封面图（同日 18:2x–19:0x，16 张全挂上）
+
+用火山方舟 `doubao-seedream-5-0-pro-260628` 生成 16 张 `2560×1440` 封面，`watermark: false`。
+出图走 `/api/admin/upload`（接口固定压站点 logo 150 px，响哥确认可接受），再 `PUT` 写回 `images`，未发版。
+风格选定**纪实工业现场**而非示意图：列表页缩略图只有 400×225，示意图标注在此时不可读；且 B2B 配件站用实拍更可信。
+`15-mrl-belt`（原图画成钢带露钢丝）与 `16-load-weighing`（原图画成拉杆支架）已按"场景照"重出。
+
+**踩坑记录（下次直接用）**：
+
+1. **后台口令末尾有个「.」**（`Zctss833423.`），漏掉就是 401 且没有任何提示。口令以 hPanel 的 `ADMIN_PASSWORD` 为准。
+2. 本机 IPv6 到站点 TLS 会卡 30 s 后被重置 → curl 必须 `-4`；`/admin`、`/api/admin` 本来就不受 CN 屏蔽。
+3. 公开页从国内是 403（站点自己的 CN 拦截），要读渲染结果得走本机代理 `-x http://127.0.0.1:7897`。
+4. Hostinger 链路偶发 TLS 握手失败/中途断流，批量写入要带重试（本次每篇最多 4 次，代理 2 次 + 直连 2 次）。
+5. **`Get-Content`/`Set-Content` 处理中文文件会按 GBK 解码再按 UTF-8 写回，直接毁文件**（本次把 STATE.md 写坏过一次，
+   已用 `git checkout --` 还原后改用编辑工具重写）。涉中文的文档改动一律走编辑工具，不要用 PowerShell 读改写。
+6. **后台列表接口 `GET /api/admin/knowledge?limit=100` 的响应会在 ~5.6 KB 处被截断**（返回 20 条时必现），
+   拿它当"标题字典"会让后续 `PUT` 全部 400、上传的图白传。批量改文章时标题从本地文件取，别依赖这个接口。
+7. 方舟图片模型：`doubao-seedream-5-0-pro-260628` 是唯一被识别的 ID，未开通时报 `ModelNotOpen`（不是 404）；
+   4.0 / 4.5 / 5.0-flash / 3.0-t2i 在该账号下全部 `InvalidEndpointOrModel.NotFound`。
+8. `covers/generate.ps1` 的 `-Only N` 参数切片写错（`$items[$Only-1..($Only-1)]` 在 PowerShell 里解析歧义），
+   单出某张请删对应 jpg 后全量跑，靠"已存在跳过"来节省调用。
+
+**产物位置**：`content/knowledge/`（`00-index.md` 清单 / `01`–`16` 新稿 / `rewrite/` 四篇重写稿 /
+`covers/` 提示词、出图与上传脚本、16 张原图）。`prisma/` 未动。
+
+**写作口径**：按 GitHub 的 [ai-slop-detector](https://github.com/FeedHive/ai-slop-detector)
+与 [humanize-ai-writing](https://github.com/haidrrrry/humanize-ai-writing) 两份清单去 AI 味 —— 禁词表、
+禁句式、禁 `In conclusion` 收尾、0 破折号、句子长度不齐、每个论点带数字或步骤。自检脚本：20 篇全部 0 命中、0 em dash。
+
+**待办**：
+
+1. ~~16 篇新稿封面图空~~ 已完成（16 张，见上），旧 4 篇保留原封面。
+2. 正文纯文本，文内没有指向产品/分类的内链（页面不解析 HTML/Markdown），SEO 上少了内链权重传递 —— 要做需改渲染（加 markdown 或 related 区块），属代码改动。
+3. 文章 URL 是 cuid（`/knowledge/cmvtacr1z…`），不可读；加 `slug` 字段更利于分享与搜索，属代码改动。
+4. 文中行业数值（150 N / 10 J、绳径 10%、安全系数 12/16、梯级链 1.5%、门锁 7 mm、超载 110%）按通行做法写，建议一线维保师傅过一眼。
+5. 下一批候选 4 个：缓冲器与底坑、扶梯梳齿板/梯级缺失监测、接触器与继电器老化、随行电缆断芯定位。
+
+---
+
 ## 2026-10-27 本轮改动（询盘转化专项 · 第一批）
 
 起因：询盘量偏低，做漏斗三层排查（流量 → 转化 → 接住）。本批落地的是「接住」+「装眼睛」+「SEO 硬伤」。
@@ -223,46 +333,37 @@ Footer 补公司全名/详细地址/认证/内链、产品页 MOQ 与起订量�
 | Prisma | 5.22.0 |
 | React | 18.3.1 |
 
-## 3. 路由清单（28 条路由）
+## 3. 路由清单（2026-11-10 按 `src/app` 实际目录重新生成）
+
+> 上一版这张表是 2026-05-18 写的，`/quotation`、`/login`、`/register`、`/account` 早已不存在。
+> 2026-10-27 的 sitemap 就是照抄这张表把 3 个 404 路由提交给了 Google —— **改路由务必同步本表**。
 
 ### 页面
 
-| 路由 | 类型 | 状态 |
-|------|------|------|
-| `/` | Static | ✅ 首页（含分类卡片） |
-| `/products` | Dynamic | ✅ 产品列表（搜索/筛选/分页） |
-| `/products/[sku]` | Dynamic | ✅ 产品详情 |
-| `/categories` | Static | ✅ 全部分类 |
-| `/categories/[slug]` | Dynamic | ✅ 分类产品列表 |
-| `/brands` | Static | ✅ 全部品牌 |
-| `/brands/[slug]` | Dynamic | ✅ 品牌产品列表 |
-| `/quotation` | Static | ✅ 报价车 |
-| `/login` | Static | ✅ 登录 |
-| `/register` | Static | ✅ 注册 |
-| `/account` | Static | ✅ 用户中心（报价历史+收藏占位） |
-| `/admin` | Static | ✅ 管理后台首页 |
-| `/admin/products` | Static | ✅ 产品管理 |
-| `/admin/quotations` | Static | ✅ 报价管理 |
-| `/admin/users` | Static | ✅ 用户管理 |
-| `/robots.txt` | Static | ✅ |
-| `/sitemap.xml` | Static | ✅ |
-| `/not-found` | Static | ✅ 自定义 404 |
-| `/error` | Static | ✅ 错误边界 |
+| 路由 | 类型 | 状态 | canonical |
+|------|------|------|:--|
+| `/` | Dynamic | ✅ 首页（含分类卡片） | `/`（根布局不再声明，首页自身即规范） |
+| `/products` | Dynamic | ✅ 产品列表（分类/品牌视图、`?q=` 搜索） | `/products`（忽略 query） |
+| `/products/[sku]` | Dynamic | ✅ 产品详情 | 自指；大小写不一致时 308 归一 |
+| `/categories` | Dynamic | ✅ **跳转壳** `redirect("/products")`，已从 sitemap 移除 | — |
+| `/categories/[slug]` | Dynamic | ✅ 分类产品列表（商业词落地页） | 自指，忽略 `?brand=` |
+| `/brands` | Dynamic | ✅ 全部品牌（列表） | `/brands` |
+| `/brands/[slug]` | Dynamic | ✅ 品牌产品列表 | 自指，忽略 `?category=` |
+| `/knowledge` | Dynamic | ✅ 知识库列表（20 篇） | `/knowledge` |
+| `/knowledge/[id]` | Dynamic | ✅ 知识库文章 | 自指 |
+| `/about` | Dynamic | ✅ 关于我们 | `/about` |
+| `/contact` | Dynamic | ✅ 联系我们（client 组件，metadata 在 `contact/layout.tsx`） | `/contact` |
+| `/search` | Dynamic | ✅ 站内搜索 | **noindex**（不参与收录） |
+| `/admin`、`/admin/{products,products/new,products/[sku]/edit,brands,knowledge,knowledge/new,knowledge/[id]/edit,messages,settings,uploads,visits,about,login}` | Dynamic | ✅ 管理后台（独立口令登录） | 无可索引价值 |
+| `/robots.txt` | Dynamic | ✅ 已移除 `/search` 的 disallow | — |
+| `/sitemap.xml` | Dynamic | ✅ 只含 200 直出的真实 URL；产品 URL 已 URL 编码 | — |
 
-### API 路由
+### API 路由（15 条，同样按实际目录核过）
 
-| 路由 | 方法 | 认证 | CSRF |
-|------|------|------|------|
-| `/api/products` | GET | 公开 | - |
-| `/api/products/[sku]` | GET | 公开（价格需要登录） | - |
-| `/api/quotations` | GET/POST | 需要登录 | POST 不需要 |
-| `/api/auth/register` | POST | 公开 | - |
-| `/api/auth/[...nextauth]` | * | NextAuth 内部 | NextAuth 内置 |
-| `/api/admin/users` | GET | Admin | - |
-| `/api/admin/users/[id]/approve` | PATCH | Admin | ✅ CSRF |
-| `/api/admin/products/[id]` | DELETE | Admin | ✅ CSRF |
-| `/api/admin/quotations` | GET | Admin | - |
-| `/api/admin/quotations/[id]` | PATCH | Admin | ✅ CSRF |
+`/api/admin/{login,logout,products,brands,brands/merge,categories-brands,knowledge,site-config,upload,visits}`、
+`/api/contact`、`/api/health`、`/api/db-check`、`/api/smtp-test`、`/api/fix-knowledge-img`。
+
+> 注意：`/api/products`、`/api/quotations`、`/api/auth/*` 这些旧表里的条目**已不存在**。
 
 ## 4. 数据模型
 

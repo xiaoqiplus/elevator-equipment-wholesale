@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 export const metadata: Metadata = {
   title: "About Us",
   description: "About QuickEase Lift Parts",
+  alternates: { canonical: "/about" },
 };
 
 async function getAboutConfig() {

@@ -2,7 +2,11 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Knowledge", description: "Elevator Industry Knowledge" };
+export const metadata: Metadata = {
+  title: "Elevator Industry Knowledge & Guides",
+  description: "Technical guides on elevator and escalator parts: how to identify components, cross-reference OEM part numbers, and troubleshoot common failures.",
+  alternates: { canonical: "/knowledge" },
+};
 
 export default async function KnowledgePage() {
   const articles = await prisma.knowledge.findMany({ orderBy: { createdAt: "desc" } });

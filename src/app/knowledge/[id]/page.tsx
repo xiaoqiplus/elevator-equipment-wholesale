@@ -9,7 +9,22 @@ interface Props { params: { id: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await prisma.knowledge.findUnique({ where: { id: params.id } });
-  return { title: post?.title || "Knowledge" };
+  if (!post) return { title: "Knowledge", robots: { index: false, follow: true } };
+
+  const plain = (post.summary || post.content || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+  const description = plain.slice(0, 160) || `${post.title} — elevator parts technical guide.`;
+
+  return {
+    title: post.title,
+    description,
+    alternates: { canonical: `/knowledge/${post.id}` },
+    openGraph: {
+      title: post.title,
+      description,
+      type: "article",
+      url: `/knowledge/${post.id}`,
+    },
+  };
 }
 
 export default async function KnowledgeDetailPage({ params }: Props) {

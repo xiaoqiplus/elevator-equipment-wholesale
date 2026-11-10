@@ -9,10 +9,13 @@ export const metadata: Metadata = {
   title: "Elevator Parts & Components | Quick Easy Lift Parts",
   description: "Browse our catalog of high-quality elevator parts, elevator components, and lift accessories. Fast shipping worldwide.",
   keywords: "elevator parts, elevator components, lift parts, elevator accessories, elevator equipment",
+  // 自指 canonical：列表页的 ?view=brands / ?q= 视图统一归一到 /products
+  alternates: { canonical: "/products" },
   openGraph: {
     title: "Elevator Parts & Components | Quick Easy Lift Parts",
     description: "Browse our catalog of high-quality elevator parts, elevator components, and lift accessories.",
     type: "website",
+    url: "/products",
   },
 };
 

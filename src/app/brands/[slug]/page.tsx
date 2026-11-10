@@ -5,6 +5,33 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
+import type { Metadata } from "next";
+
+interface BrandProps { params: { slug: string } }
+
+// 品牌页同样是商业落地页（"Otis elevator parts"），必须自指 canonical，
+// 并忽略 ?category= 过滤参数。
+export async function generateMetadata({ params }: BrandProps): Promise<Metadata> {
+  const brand = await prisma.brand.findUnique({ where: { slug: params.slug } });
+  if (!brand) return { title: "Brand Not Found", robots: { index: false, follow: true } };
+
+  const count = await prisma.product.count({ where: { brandId: brand.id } }).catch(() => 0);
+  const description = count > 0
+    ? `${brand.name} elevator and escalator spare parts — ${count} items available. OEM and compatible components with fast worldwide shipping.`
+    : `${brand.name} elevator and escalator spare parts. Fast worldwide shipping.`;
+
+  return {
+    title: `${brand.name} Elevator Parts`,
+    description,
+    alternates: { canonical: `/brands/${brand.slug}` },
+    openGraph: {
+      title: `${brand.name} Elevator Parts`,
+      description,
+      type: "website",
+      url: `/brands/${brand.slug}`,
+    },
+  };
+}
 
 export default async function BrandDetailPage({
   params, searchParams,

@@ -8,8 +8,10 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        // /search 是带参数的站内结果页，被抓会产生大量重复内容
-        disallow: ["/api/", "/admin/", "/search"],
+        // /search 不再 disallow：它已在页面里声明 robots: noindex。
+        // 如果这里继续 disallow，Googlebot 抓不到页面就看不到 noindex，
+        // 已收录的搜索页会一直赖在索引里删不掉。noindex + 可抓取 才是正确组合。
+        disallow: ["/api/", "/admin/"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

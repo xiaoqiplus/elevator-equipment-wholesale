@@ -4,7 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Search" };
+// 站内搜索结果页不该进索引：参数无限组合 + 内容随查询变化
+export const metadata: Metadata = {
+  title: "Search",
+  robots: { index: false, follow: true },
+};
 
 export default async function SearchPage({
   searchParams,
