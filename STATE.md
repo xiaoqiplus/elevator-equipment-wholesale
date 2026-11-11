@@ -134,6 +134,10 @@ QE-O-HAA180DA2␠             （␠ = 尾随空格）
 
 **未做（收益最大，但需要拍板）**：页面级缓存。根布局为了记录访问日志调用了 `headers()`，这会让**所有**路由失去静态/ISR 能力，响应头是 `Cache-Control: private, no-store`。要真正把 CPU 降下来，得把访问记录移出渲染路径（例如 middleware 里异步写、或挪到客户端 beacon），代价是访问统计口径会变。等确认后再动。
 
+**sitemap 最终形态（2026-11-11 收尾）**：`src/app/sitemap.ts` 已改为 `src/lib/sitemap-data.ts`（数据 + XML 序列化 + 10 分钟缓存）+ `src/app/sitemap.xml/route.ts`（自己发唯一 `Cache-Control: s-maxage=3600`、`ETag`）。改路由处理器的原因：metadata 路由会被 Next 强制追加 `must-revalidate`，与 `s-maxage` 并存成两个头，边缘缓存会被削弱。XML 改成一条 URL 一行（不缩进），线上实测体积 784 KB → **688 KB**、3864 条、约 2.6 秒（冷缓存）。
+
+> ⚠️ **已知未生效项**：`If-None-Match` → 304 **在 Hostinger 的 hcdn 后面没有生效**（线上反复实测：带上正确的 ETag 仍返回 200 + 全量正文）。应用层逻辑本身是对的（单测覆盖强/弱 ETag 两种情况都回 304），判断是边缘没把条件请求透传/承认。代码保留（边缘哪天放行就自动生效），但**不要把它算进预期收益**。真正在起作用的降负载手段是「进程内缓存 + s-maxage」这两层。
+
 
 
 ### ✅ 后台认证已加固（2026-10-27 15:32 修复，上一版此处是「待处理」）
