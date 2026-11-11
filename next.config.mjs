@@ -64,18 +64,8 @@ const nextConfig = {
           },
         ],
       },
-      // sitemap — 允许 hcdn/LiteSpeed 在边缘缓存 1 小时。
-      // 该文件覆盖 3800+ 个 URL、单次生成 2.5–4.3 秒（未缓存时），
-      // 让边缘挡住重复抓取，别每次都落到 Node 上（应用内还另有一层 10 分钟进程内缓存）。
-      {
-        source: "/sitemap.xml",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
-          },
-        ],
-      },
+      // 注意：/sitemap.xml 的缓存头由 src/app/sitemap.xml/route.ts 自己发
+      // （这里再加一份会和它并存成两个 Cache-Control，反而互相削弱）
       // API routes — permissive CORS for cross-origin consumers
       {
         source: "/api/:path*",

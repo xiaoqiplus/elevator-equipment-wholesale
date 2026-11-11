@@ -130,8 +130,8 @@ describe("各路由必须自指 canonical", () => {
 
 describe("sitemap 只能提交真实存在的 URL", () => {
   it("不含跳转壳 /categories 与 404 路由", async () => {
-    const sitemap = (await import("../sitemap")).default;
-    const urls = (await sitemap()).map((e: any) => e.url);
+    const { buildSitemapEntries } = await import("@/lib/sitemap-data");
+    const urls = (await buildSitemapEntries()).map((e) => e.url);
     for (const bad of ["/categories", "/quotation", "/login", "/register"]) {
       expect(urls).not.toContain(`${HOME}${bad}`);
     }
@@ -140,13 +140,54 @@ describe("sitemap 只能提交真实存在的 URL", () => {
   });
 
   it("含空白字符的 SKU 不进 sitemap（这类页面线上实测 404）", async () => {
-    const sitemap = (await import("../sitemap")).default;
-    const urls = (await sitemap()).map((e: any) => e.url);
+    const { buildSitemapEntries } = await import("@/lib/sitemap-data");
+    const urls = (await buildSitemapEntries()).map((e) => e.url);
     // 假数据里 QE-K-KM611085H01 带尾随空格，必须被过滤掉
     expect(urls.some((u: string) => u.includes("QE-K-KM611085H01"))).toBe(false);
     // 干净的 SKU 照常输出
     expect(urls).toContain(`${HOME}/products/KM964619G24`);
     // 任何 URL 都不该出现空白字符
     expect(urls.every((u: string) => !/\s/.test(u))).toBe(true);
+  });
+
+  it("XML 序列化会转义 & 等特殊字符", async () => {
+    const { renderSitemapXml } = await import("@/lib/sitemap-data");
+    const xml = renderSitemapXml([
+      {
+        url: "https://quickeaseliftparts.com/products/A&B",
+        lastModified: new Date("2026-01-01T00:00:00Z"),
+        changeFrequency: "weekly",
+        priority: 0.7,
+      },
+    ]);
+    expect(xml).toContain("<loc>https://quickeaseliftparts.com/products/A&amp;B</loc>");
+    expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
+  });
+});
+
+describe("sitemap 路由处理器（自己控缓存头 + ETag）", () => {
+  it("只发一个 Cache-Control，带 s-maxage 和 ETag", async () => {
+    const { GET } = await import("../sitemap.xml/route");
+    const res = await GET(new Request("https://quickeaseliftparts.com/sitemap.xml"));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/xml");
+    expect(res.headers.get("cache-control")).toContain("s-maxage=3600");
+    expect(res.headers.get("etag")).toBeTruthy();
+    expect(await res.text()).toContain("<urlset");
+  });
+
+  it("If-None-Match 命中时回 304，不再传 700KB 正文", async () => {
+    const { GET } = await import("../sitemap.xml/route");
+    const first = await GET(new Request("https://quickeaseliftparts.com/sitemap.xml"));
+    const etag = first.headers.get("etag")!;
+
+    const second = await GET(
+      new Request("https://quickeaseliftparts.com/sitemap.xml", {
+        headers: { "if-none-match": etag },
+      })
+    );
+    expect(second.status).toBe(304);
+    expect(await second.text()).toBe("");
   });
 });
