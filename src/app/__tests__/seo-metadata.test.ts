@@ -190,4 +190,33 @@ describe("sitemap 路由处理器（自己控缓存头 + ETag）", () => {
     expect(second.status).toBe(304);
     expect(await second.text()).toBe("");
   });
+
+  it("弱校验 ETag（W/ 前缀）也要能命中 304", async () => {
+    const { GET } = await import("../sitemap.xml/route");
+    const first = await GET(new Request("https://quickeaseliftparts.com/sitemap.xml"));
+    const etag = first.headers.get("etag")!;
+
+    const second = await GET(
+      new Request("https://quickeaseliftparts.com/sitemap.xml", {
+        headers: { "if-none-match": `W/${etag}` },
+      })
+    );
+    expect(second.status).toBe(304);
+  });
+
+  it("XML 一个 url 一行，不做缩进（省传输量）", async () => {
+    const { renderSitemapXml } = await import("@/lib/sitemap-data");
+    const xml = renderSitemapXml([
+      {
+        url: "https://quickeaseliftparts.com/products/X",
+        lastModified: new Date("2026-01-01T00:00:00Z"),
+        changeFrequency: "weekly",
+        priority: 0.7,
+      },
+    ]);
+    // 除第一行声明和 <urlset> 外，每个 url 条目应自成一行且不带缩进
+    const urlLines = xml.split("\n").filter((l) => l.startsWith("<url>"));
+    expect(urlLines).toHaveLength(1);
+    expect(xml).not.toContain("    <loc>");
+  });
 });

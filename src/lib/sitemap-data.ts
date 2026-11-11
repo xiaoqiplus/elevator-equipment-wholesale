@@ -140,16 +140,15 @@ function esc(s: string): string {
 }
 
 export function renderSitemapXml(entries: SitemapEntry[]): string {
+  // 一个 <url> 一行，不做缩进：3864 个条目，缩进会白占 70+ KB 传输量
   const body = entries
     .map((e) => {
       const lastmod = e.lastModified instanceof Date ? e.lastModified.toISOString() : String(e.lastModified);
       return (
-        `  <url>\n` +
-        `    <loc>${esc(e.url)}</loc>\n` +
-        `    <lastmod>${lastmod}</lastmod>\n` +
-        `    <changefreq>${e.changeFrequency}</changefreq>\n` +
-        `    <priority>${e.priority.toFixed(1)}</priority>\n` +
-        `  </url>`
+        `<url><loc>${esc(e.url)}</loc>` +
+        `<lastmod>${lastmod}</lastmod>` +
+        `<changefreq>${e.changeFrequency}</changefreq>` +
+        `<priority>${e.priority.toFixed(1)}</priority></url>`
       );
     })
     .join("\n");

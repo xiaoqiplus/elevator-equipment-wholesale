@@ -13,6 +13,12 @@ export const dynamic = "force-dynamic";
 
 const CACHE_CONTROL = "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400";
 
+// Next/边缘会把 ETag 变成弱校验（W/"..."），客户端再送回来时前缀不一定一致，
+// 所以比较前统一去掉 W/，否则 304 永远命不中（2026-11-11 线上实测踩到过）。
+function normalizeEtag(tag: string | null): string {
+  return (tag || "").trim().replace(/^W\//i, "");
+}
+
 export async function GET(request: Request) {
   const entries = await buildSitemapEntries();
   const xml = renderSitemapXml(entries);
@@ -20,7 +26,7 @@ export async function GET(request: Request) {
   const etag = `"${createHash("sha1").update(xml).digest("hex").slice(0, 32)}"`;
 
   // 条件请求：内容没变就回 304，不重复传 700 KB
-  if (request.headers.get("if-none-match") === etag) {
+  if (normalizeEtag(request.headers.get("if-none-match")) === normalizeEtag(etag)) {
     return new Response(null, {
       status: 304,
       headers: { ETag: etag, "Cache-Control": CACHE_CONTROL },
