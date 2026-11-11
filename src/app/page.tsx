@@ -125,7 +125,7 @@ export default async function Home() {
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {hotProducts.map((p) => (
-              <Link key={p.sku} href={`/products/${p.sku}`}>
+              <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                   <div className="aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
                     {Array.isArray(p.images) && p.images[0] ? (

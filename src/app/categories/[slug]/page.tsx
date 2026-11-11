@@ -9,29 +9,43 @@ import type { Metadata } from "next";
 
 export const revalidate = 60;
 
-interface Props { params: { slug: string } }
+interface Props {
+  params: { slug: string };
+  searchParams?: { brand?: string; page?: string };
+}
 
 // 分类页是「elevator door parts」这类商业词的最佳落地页，
 // 必须有自己的 title/description/自指 canonical。canonical 忽略 ?brand= 过滤参数，
 // 让所有筛选视图归一到分类根 URL（否则每个品牌组合都会变成一条重复内容）。
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+// 分页则相反：?page=N 自指，否则第 2 页起的 47 个产品会全被判成重复内容。
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const category = await prisma.category.findUnique({ where: { slug: params.slug } });
   if (!category) return { title: "Category Not Found", robots: { index: false, follow: true } };
+
+  const pageNum = Math.max(1, parseInt(searchParams?.page || "1", 10) || 1);
+  const hasBrandFilter = !!searchParams?.brand;
+  const canonical = hasBrandFilter || pageNum <= 1
+    ? `/categories/${category.slug}`
+    : `/categories/${category.slug}?page=${pageNum}`;
 
   const count = await prisma.product.count({ where: { categoryId: category.id } }).catch(() => 0);
   const description = count > 0
     ? `${category.name}: ${count} elevator and escalator parts in stock, for Otis, Kone, Schindler, Mitsubishi, ThyssenKrupp and more. Fast worldwide dispatch, request a quote.`
     : `${category.name} for elevators and escalators. Fast worldwide dispatch, request a quote.`;
 
+  const title = pageNum > 1
+    ? `${category.name} — Page ${pageNum} | Elevator & Escalator Parts`
+    : `${category.name} — Elevator & Escalator Parts`;
+
   return {
-    title: `${category.name} — Elevator & Escalator Parts`,
+    title,
     description,
-    alternates: { canonical: `/categories/${category.slug}` },
+    alternates: { canonical },
     openGraph: {
-      title: `${category.name} — Elevator & Escalator Parts`,
+      title,
       description,
       type: "website",
-      url: `/categories/${category.slug}`,
+      url: canonical,
     },
   };
 }
@@ -41,13 +55,14 @@ export default async function CategoryDetailPage({
   searchParams,
 }: {
   params: { slug: string };
-  searchParams: { brand?: string };
+  searchParams: { brand?: string; page?: string };
 }) {
   const { slug } = params;
   const category = await prisma.category.findUnique({ where: { slug } });
   if (!category) notFound();
 
   const activeBrand = searchParams.brand || "";
+  const pageNum = Math.max(1, parseInt(searchParams.page || "1", 10) || 1);
 
   // 该分类下所有品牌及其产品数
   const brandCounts = await prisma.product.groupBy({
@@ -72,13 +87,33 @@ export default async function CategoryDetailPage({
     if (selectedBrand) where.brandId = selectedBrand.id;
   }
 
-  const products = await prisma.product.findMany({
-    where,
-    select: { sku: true, name: true, description: true, images: true,
-      category: { select: { name: true, slug: true } },
-      brand: { select: { name: true, slug: true } } },
-    orderBy: { name: "asc" },
-  });
+  // ── 分页（2026-11-11）────────────────────────────────────────────────
+  // 原来一次把该分类下所有产品全查出来渲染：最大的分类有 646 个产品，
+  // 单页 HTML + RSC 载荷巨大，在共享主机上每访问一次就是一次重活。
+  // 现在每页 48 条，count + 分页查询，首屏体积和内存都降了两个数量级。
+  const PAGE_SIZE = 48;
+  const [total, products] = await Promise.all([
+    prisma.product.count({ where }),
+    prisma.product.findMany({
+      where,
+      select: { sku: true, name: true, description: true, images: true,
+        category: { select: { name: true, slug: true } },
+        brand: { select: { name: true, slug: true } } },
+      orderBy: { name: "asc" },
+      skip: (pageNum - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // 分页/筛选链接要保留 brand 参数
+  const pageHref = (n: number) => {
+    const qs = new URLSearchParams();
+    if (activeBrand) qs.set("brand", activeBrand);
+    if (n > 1) qs.set("page", String(n));
+    const q = qs.toString();
+    return `/categories/${slug}${q ? `?${q}` : ""}`;
+  };
 
   return (
     <div>
@@ -98,7 +133,7 @@ export default async function CategoryDetailPage({
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-2xl font-bold text-slate-800">{category.name}</h1>
-          <Badge variant="secondary" className="text-sm px-3 py-1">{products.length} items</Badge>
+          <Badge variant="secondary" className="text-sm px-3 py-1">{total} items</Badge>
           {activeBrand && (
             <Badge className="bg-slate-800 text-white text-sm px-3 py-1">
               {brandList.find(b => b.slug === activeBrand)?.name || activeBrand}
@@ -139,7 +174,7 @@ export default async function CategoryDetailPage({
         {/* 产品网格 */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((p) => (
-            <Link key={p.sku} href={`/products/${p.sku}`}>
+            <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
               <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                 <div className="aspect-square bg-slate-50 flex items-center justify-center">
                   {Array.isArray(p.images) && p.images[0] ? (
@@ -165,6 +200,31 @@ export default async function CategoryDetailPage({
 
         {products.length === 0 && (
           <p className="py-20 text-center text-sm text-slate-400">No products found.</p>
+        )}
+
+        {/* 分页导航：不预取，减少后台请求；页数多的分类只暴露首尾+邻近页 */}
+        {totalPages > 1 && (
+          <nav className="mt-10 flex flex-wrap items-center justify-center gap-2 text-sm" aria-label="Pagination">
+            {pageNum > 1 && (
+              <Link href={pageHref(pageNum - 1)} prefetch={false}
+                className="rounded-md border px-3 py-1.5 text-slate-600 hover:bg-slate-50">‹ Prev</Link>
+            )}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(n => n === 1 || n === totalPages || Math.abs(n - pageNum) <= 2)
+              .map((n, idx, arr) => (
+                <span key={n} className="flex items-center gap-2">
+                  {idx > 0 && arr[idx - 1] !== n - 1 && <span className="text-slate-300">…</span>}
+                  <Link href={pageHref(n)} prefetch={false}
+                    className={`rounded-md border px-3 py-1.5 ${n === pageNum ? "bg-slate-800 text-white border-slate-800" : "text-slate-600 hover:bg-slate-50"}`}>
+                    {n}
+                  </Link>
+                </span>
+              ))}
+            {pageNum < totalPages && (
+              <Link href={pageHref(pageNum + 1)} prefetch={false}
+                className="rounded-md border px-3 py-1.5 text-slate-600 hover:bg-slate-50">Next ›</Link>
+            )}
+          </nav>
         )}
       </section>
     </div>

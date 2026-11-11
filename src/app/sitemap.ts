@@ -1,12 +1,21 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
-// sitemap 始终实时生成（产品新增后立即反映），不缓存
-export const revalidate = 0;
+// ⚠️ 性能：sitemap 覆盖 3800+ 个 SKU，未缓存时单次要查 3800 行、耗时 2.5–4.3 秒、输出 707 KB
+// （2026-11-11 实测）。爬虫、监控、站长工具多抓几次，就会把共享主机压到资源上限。
+// 这些 URL 10 分钟内基本不会变，所以这里做进程内缓存 + 边缘缓存（next.config.mjs 里的
+// Cache-Control: s-maxage），而不是 `revalidate = 0` 那样每抓一次打一次数据库。
+// 保留 dynamic（不在构建期查库），只是同一进程内 10 分钟内复用结果。
+export const dynamic = "force-dynamic";
+
+const MEMO_TTL_MS = 10 * 60 * 1000;
+let memo: { at: number; data: MetadataRoute.Sitemap } | null = null;
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://quickeaseliftparts.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (memo && Date.now() - memo.at < MEMO_TTL_MS) return memo.data;
+
   const now = new Date();
 
   // 固定页面（含分类/品牌/知识库的列表页 —— 原先漏提交，Google 只能靠自然抓取发现）
@@ -98,5 +107,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /* 忽略 */
   }
 
-  return [...staticPages, ...categoryPages, ...brandPages, ...knowledgePages, ...productPages];
+  // 只有查库真的成功（拿到产品）才写缓存，避免一次数据库抖动把空 sitemap 缓存 10 分钟
+  const result = [...staticPages, ...categoryPages, ...brandPages, ...knowledgePages, ...productPages];
+  if (productPages.length > 0) memo = { at: Date.now(), data: result };
+  return result;
 }

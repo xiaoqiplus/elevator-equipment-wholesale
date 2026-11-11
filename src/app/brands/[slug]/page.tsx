@@ -7,28 +7,41 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
 import type { Metadata } from "next";
 
-interface BrandProps { params: { slug: string } }
+interface BrandProps {
+  params: { slug: string };
+  searchParams?: { category?: string; page?: string };
+}
 
 // 品牌页同样是商业落地页（"Otis elevator parts"），必须自指 canonical，
-// 并忽略 ?category= 过滤参数。
-export async function generateMetadata({ params }: BrandProps): Promise<Metadata> {
+// 并忽略 ?category= 过滤参数；但 ?page=N 要自指，否则第 2 页起的产品会被判重复内容。
+export async function generateMetadata({ params, searchParams }: BrandProps): Promise<Metadata> {
   const brand = await prisma.brand.findUnique({ where: { slug: params.slug } });
   if (!brand) return { title: "Brand Not Found", robots: { index: false, follow: true } };
+
+  const pageNum = Math.max(1, parseInt(searchParams?.page || "1", 10) || 1);
+  const hasCatFilter = !!searchParams?.category;
+  const canonical = hasCatFilter || pageNum <= 1
+    ? `/brands/${brand.slug}`
+    : `/brands/${brand.slug}?page=${pageNum}`;
 
   const count = await prisma.product.count({ where: { brandId: brand.id } }).catch(() => 0);
   const description = count > 0
     ? `${brand.name} elevator and escalator spare parts — ${count} items available. OEM and compatible components with fast worldwide shipping.`
     : `${brand.name} elevator and escalator spare parts. Fast worldwide shipping.`;
 
+  const title = pageNum > 1
+    ? `${brand.name} Elevator Parts — Page ${pageNum}`
+    : `${brand.name} Elevator Parts`;
+
   return {
-    title: `${brand.name} Elevator Parts`,
+    title,
     description,
-    alternates: { canonical: `/brands/${brand.slug}` },
+    alternates: { canonical },
     openGraph: {
-      title: `${brand.name} Elevator Parts`,
+      title,
       description,
       type: "website",
-      url: `/brands/${brand.slug}`,
+      url: canonical,
     },
   };
 }
@@ -37,12 +50,13 @@ export default async function BrandDetailPage({
   params, searchParams,
 }: {
   params: { slug: string };
-  searchParams: { category?: string };
+  searchParams: { category?: string; page?: string };
 }) {
   const brand = await prisma.brand.findUnique({ where: { slug: params.slug } });
   if (!brand) notFound();
 
   const activeCat = searchParams.category || "";
+  const pageNum = Math.max(1, parseInt(searchParams.page || "1", 10) || 1);
 
   // 该品牌下所有分类及其产品数
   const catCounts = await prisma.product.groupBy({
@@ -64,13 +78,29 @@ export default async function BrandDetailPage({
     if (selectedCat) where.categoryId = selectedCat.id;
   }
 
-  const products = await prisma.product.findMany({
-    where,
-    select: { sku: true, name: true, description: true, images: true,
-      category: { select: { name: true, slug: true } },
-      brand: { select: { name: true, slug: true } } },
-    orderBy: { name: "asc" },
-  });
+  // 分页，理由同分类页：大品牌（如 Otis/Kone）一次全渲染会拖垮共享主机
+  const PAGE_SIZE = 48;
+  const [total, products] = await Promise.all([
+    prisma.product.count({ where }),
+    prisma.product.findMany({
+      where,
+      select: { sku: true, name: true, description: true, images: true,
+        category: { select: { name: true, slug: true } },
+        brand: { select: { name: true, slug: true } } },
+      orderBy: { name: "asc" },
+      skip: (pageNum - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const pageHref = (n: number) => {
+    const qs = new URLSearchParams();
+    if (activeCat) qs.set("category", activeCat);
+    if (n > 1) qs.set("page", String(n));
+    const q = qs.toString();
+    return `/brands/${params.slug}${q ? `?${q}` : ""}`;
+  };
 
   return (
     <div>
@@ -90,7 +120,7 @@ export default async function BrandDetailPage({
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-2xl font-bold text-slate-800">{brand.name}</h1>
-          <Badge variant="secondary" className="text-sm px-3 py-1">{products.length} items</Badge>
+          <Badge variant="secondary" className="text-sm px-3 py-1">{total} items</Badge>
           {activeCat && (
             <Badge className="bg-slate-800 text-white text-sm px-3 py-1">
               {catList.find((c: any) => c.slug === activeCat)?.name || activeCat}
@@ -126,7 +156,7 @@ export default async function BrandDetailPage({
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((p) => (
-            <Link key={p.sku} href={`/products/${p.sku}`}>
+            <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
               <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                 <div className="aspect-square bg-slate-50 flex items-center justify-center">
                   {Array.isArray(p.images) && p.images[0] ? (
@@ -149,6 +179,30 @@ export default async function BrandDetailPage({
 
         {products.length === 0 && (
           <p className="py-20 text-center text-sm text-slate-400">No products found.</p>
+        )}
+
+        {totalPages > 1 && (
+          <nav className="mt-10 flex flex-wrap items-center justify-center gap-2 text-sm" aria-label="Pagination">
+            {pageNum > 1 && (
+              <Link href={pageHref(pageNum - 1)} prefetch={false}
+                className="rounded-md border px-3 py-1.5 text-slate-600 hover:bg-slate-50">‹ Prev</Link>
+            )}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(n => n === 1 || n === totalPages || Math.abs(n - pageNum) <= 2)
+              .map((n, idx, arr) => (
+                <span key={n} className="flex items-center gap-2">
+                  {idx > 0 && arr[idx - 1] !== n - 1 && <span className="text-slate-300">…</span>}
+                  <Link href={pageHref(n)} prefetch={false}
+                    className={`rounded-md border px-3 py-1.5 ${n === pageNum ? "bg-slate-800 text-white border-slate-800" : "text-slate-600 hover:bg-slate-50"}`}>
+                    {n}
+                  </Link>
+                </span>
+              ))}
+            {pageNum < totalPages && (
+              <Link href={pageHref(pageNum + 1)} prefetch={false}
+                className="rounded-md border px-3 py-1.5 text-slate-600 hover:bg-slate-50">Next ›</Link>
+            )}
+          </nav>
         )}
       </section>
     </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import ProductInquiryForm from "@/components/ProductInquiryForm";
 import { Button } from "@/components/ui/button";
@@ -13,12 +14,14 @@ export const dynamic = 'force-dynamic';
 
 interface Props { params: { sku: string } }
 
-async function getProduct(sku: string) {
+// generateMetadata 和页面本体都要这份数据 —— 用 React 的 cache() 包一层，
+// 同一次请求内只查一次库（原来每个产品页固定查 2 次产品 + 1 次相关 + 1 次热销）。
+const getProduct = cache(async (sku: string) => {
   return prisma.product.findUnique({
     where: { sku },
     include: { category: true, brand: true },
   });
-}
+});
 
 // 产品规范 URL。SKU 可能含空格等需编码字符，且 MySQL 唯一索引不区分大小写 ——
 // 小写变体也能查到记录，所以必须先把 URL 归一，否则同一个产品会有多个 200 地址。
@@ -302,7 +305,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <h2 className="mb-6 text-xl font-bold text-slate-800">Related Products</h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {relatedProducts.map((p) => (
-                <Link key={p.sku} href={`/products/${p.sku}`}>
+                <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
                   <div className="rounded-lg border bg-white p-3 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
                     <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-slate-50">
                       {Array.isArray(p.images) && p.images[0] ? (
@@ -327,7 +330,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <h2 className="mb-6 text-xl font-bold text-slate-800">🔥 Hot Products</h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {hotProducts.map((p) => (
-                <Link key={p.sku} href={`/products/${p.sku}`}>
+                <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
                   <div className="rounded-lg border bg-white p-3 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
                     <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-slate-50">
                       {Array.isArray(p.images) && p.images[0] ? (

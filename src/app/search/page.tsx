@@ -74,7 +74,7 @@ export default async function SearchPage({
             <p className="mb-6 text-sm text-slate-400">{products.length} result{products.length > 1 ? "s" : ""}</p>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {products.map((p) => (
-                <Link key={p.sku} href={`/products/${p.sku}`}>
+                <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
                   <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                     <div className="aspect-square bg-slate-50 flex items-center justify-center">
                       {Array.isArray(p.images) && p.images[0] ? (

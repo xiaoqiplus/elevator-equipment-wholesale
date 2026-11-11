@@ -23,7 +23,10 @@ export default function ProductCard({ sku, name, description, images, specs, cat
 
   return (
     <Card data-testid="product-card" className="group overflow-hidden">
-      <Link href={`/products/${sku}`} className="block">
+      {/* prefetch={false}：产品页是重 SSR（每次 4 次查库、无页面缓存），
+          列表一渲染浏览器就会自动预取一屏内所有产品页，在共享主机上会打出请求尖峰。
+          点击时仍走客户端跳转，体验基本无损。 */}
+      <Link href={`/products/${sku}`} prefetch={false} className="block">
         <div className="relative aspect-square w-full overflow-hidden bg-muted">
           <img
             src={imgError || images.length === 0 ? FALLBACK_IMAGE : imgSrc}
