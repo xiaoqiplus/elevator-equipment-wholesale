@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
@@ -11,7 +12,18 @@ export const metadata: Metadata = {
   alternates: { canonical: "/brands" },
 };
 
-export default async function BrandsPage() {
+export default async function BrandsPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
+  // 任何查询参数都归一到干净 /brands：
+  // next.config 的 /products?view=brands → /brands 会保留原 query，这里做最后一跳；
+  // 旧的 ?brand= 死链形态同理。canonical 已经指向 /brands，这里只是收敛 URL。
+  if (searchParams && Object.keys(searchParams).length > 0) {
+    permanentRedirect("/brands");
+  }
+
   const brands = await prisma.brand.findMany({
     include: { _count: { select: { products: true } } },
     orderBy: { name: "asc" },

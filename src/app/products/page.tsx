@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { getFirstProductImageByCategory } from "@/lib/category-thumbs";
 import type { Metadata } from "next";
 
+// 根布局 title.template 会补 "| QuickEase Lift Parts"，这里不能再带品牌后缀（否则双后缀）
 export const metadata: Metadata = {
-  title: "Elevator Parts & Components | Quick Easy Lift Parts",
+  title: "Elevator Parts & Components",
   description: "Browse our catalog of high-quality elevator parts, elevator components, and lift accessories. Fast shipping worldwide.",
   keywords: "elevator parts, elevator components, lift parts, elevator accessories, elevator equipment",
-  // 自指 canonical：列表页的 ?view=brands / ?q= 视图统一归一到 /products
+  // 自指 canonical：列表页的 ?q= 等视图统一归一到 /products
+  // （?view=brands 已在 next.config.mjs 里 308 到 /brands，不再进这个页面）
   alternates: { canonical: "/products" },
   openGraph: {
     title: "Elevator Parts & Components | Quick Easy Lift Parts",
@@ -59,10 +61,10 @@ export default async function ProductsPage({
           </div>
           <div className="mb-8 flex justify-center gap-4">
             <Button variant="outline" asChild size="lg" className="text-base px-6">
-              <Link href={`/products${q ? `?q=${q}` : ""}`}>By Category</Link>
+              <Link href={`/products${q ? `?q=${encodeURIComponent(q)}` : ""}`}>By Category</Link>
             </Button>
             <Button asChild size="lg" className="bg-slate-800 text-base px-6">
-              <Link href={`/products?view=brands${q ? `&q=${q}` : ""}`}>By Brand</Link>
+              <Link href="/brands">By Brand</Link>
             </Button>
           </div>
           {q && <p className="mb-4 text-xs text-slate-400">{brands.length} brand{brands.length !== 1 ? "s" : ""} matching &quot;{q}&quot;</p>}
@@ -121,10 +123,10 @@ export default async function ProductsPage({
         </div>
         <div className="mb-8 flex justify-center gap-4">
           <Button asChild size="lg" className="bg-slate-800 text-base px-6">
-            <Link href={`/products${q ? `?q=${q}` : ""}`}>By Category</Link>
+            <Link href={`/products${q ? `?q=${encodeURIComponent(q)}` : ""}`}>By Category</Link>
           </Button>
           <Button variant="outline" asChild size="lg" className="text-base px-6">
-            <Link href={`/products?view=brands${q ? `&q=${q}` : ""}`}>By Brand</Link>
+            <Link href="/brands">By Brand</Link>
           </Button>
         </div>
         {q && <p className="mb-4 text-xs text-slate-400">{categories.length} categor{categories.length !== 1 ? "ies" : "y"} matching &quot;{q}&quot;</p>}

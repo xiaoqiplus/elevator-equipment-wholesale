@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
 import { getFirstProductImageByCategory } from "@/lib/category-thumbs";
+import { productPath } from "@/lib/product-path";
 
 // 首页的 canonical 只声明在首页自己身上，绝不能放进根布局（那会泄漏到全站）
 export const metadata: Metadata = {
@@ -125,7 +126,7 @@ export default async function Home() {
           </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {hotProducts.map((p) => (
-              <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
+              <Link key={p.sku} href={productPath(p.sku)} prefetch={false}>
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                   <div className="aspect-square bg-slate-50 flex items-center justify-center overflow-hidden">
                     {Array.isArray(p.images) && p.images[0] ? (

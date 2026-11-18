@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,8 +6,38 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
 import type { Metadata } from "next";
+import { catalogCanonical } from "@/lib/catalog-url";
+import { productPath } from "@/lib/product-path";
 
 export const revalidate = 60;
+
+const PAGE_SIZE = 48;
+
+/** 解析 ?page=N：非法/0/负数一律回第 1 页 */
+function parsePage(raw: string | undefined): number {
+  return Math.max(1, parseInt(raw || "1", 10) || 1);
+}
+
+/** 分类不存在时的兜底：大小写不同的 slug（如 Elevator-PCB）308 到规范地址 */
+async function redirectIfCaseVariant(
+  slug: string,
+  searchParams: { brand?: string; page?: string }
+): Promise<never> {
+  if (slug !== slug.toLowerCase()) {
+    // 只有含大写才值得多查一次；小写 slug 查不到就是真 404
+    const all = await prisma.category.findMany({ select: { slug: true } });
+    const hit = all.find((c) => c.slug.toLowerCase() === slug.toLowerCase());
+    if (hit) {
+      const qs = new URLSearchParams();
+      if (searchParams.brand) qs.set("brand", String(searchParams.brand));
+      const pageNum = parsePage(searchParams.page);
+      if (pageNum > 1) qs.set("page", String(pageNum));
+      const q = qs.toString();
+      permanentRedirect(`/categories/${hit.slug}${q ? `?${q}` : ""}`);
+    }
+  }
+  notFound();
+}
 
 interface Props {
   params: { slug: string };
@@ -15,20 +45,26 @@ interface Props {
 }
 
 // 分类页是「elevator door parts」这类商业词的最佳落地页，
-// 必须有自己的 title/description/自指 canonical。canonical 忽略 ?brand= 过滤参数，
-// 让所有筛选视图归一到分类根 URL（否则每个品牌组合都会变成一条重复内容）。
-// 分页则相反：?page=N 自指，否则第 2 页起的 47 个产品会全被判成重复内容。
+// 必须有自己的 title/description/自指 canonical。
+// canonical 口径见 src/lib/catalog-url.ts：
+//   - 带 ?brand= 的第 1 页 → 归一到分类根 URL（导航筛选，不单独收录）
+//   - ?page=N（含带筛选）→ 自指并保留筛选参数，否则第 2 页起的产品会被判重复内容
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const category = await prisma.category.findUnique({ where: { slug: params.slug } });
   if (!category) return { title: "Category Not Found", robots: { index: false, follow: true } };
 
-  const pageNum = Math.max(1, parseInt(searchParams?.page || "1", 10) || 1);
-  const hasBrandFilter = !!searchParams?.brand;
-  const canonical = hasBrandFilter || pageNum <= 1
-    ? `/categories/${category.slug}`
-    : `/categories/${category.slug}?page=${pageNum}`;
+  const pageNum = parsePage(searchParams?.page);
+  const brandFilter = searchParams?.brand ? String(searchParams.brand) : "";
+  const canonical = catalogCanonical("categories", category.slug, "brand", brandFilter, pageNum);
 
   const count = await prisma.product.count({ where: { categoryId: category.id } }).catch(() => 0);
+  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
+
+  // 越界页会被页面本体 notFound()；这里不声明 canonical，避免给一个 404 页发规范标记
+  if (pageNum > totalPages) {
+    return { title: `${category.name} — Page Not Found`, robots: { index: false, follow: true } };
+  }
+
   const description = count > 0
     ? `${category.name}: ${count} elevator and escalator parts in stock, for Otis, Kone, Schindler, Mitsubishi, ThyssenKrupp and more. Fast worldwide dispatch, request a quote.`
     : `${category.name} for elevators and escalators. Fast worldwide dispatch, request a quote.`;
@@ -58,11 +94,11 @@ export default async function CategoryDetailPage({
   searchParams: { brand?: string; page?: string };
 }) {
   const { slug } = params;
+  const pageNum = parsePage(searchParams.page);
   const category = await prisma.category.findUnique({ where: { slug } });
-  if (!category) notFound();
+  if (!category) return redirectIfCaseVariant(slug, searchParams);
 
   const activeBrand = searchParams.brand || "";
-  const pageNum = Math.max(1, parseInt(searchParams.page || "1", 10) || 1);
 
   // 该分类下所有品牌及其产品数
   const brandCounts = await prisma.product.groupBy({
@@ -88,10 +124,9 @@ export default async function CategoryDetailPage({
   }
 
   // ── 分页（2026-11-11）────────────────────────────────────────────────
-  // 原来一次把该分类下所有产品全查出来渲染：最大的分类有 646 个产品，
-  // 单页 HTML + RSC 载荷巨大，在共享主机上每访问一次就是一次重活。
-  // 现在每页 48 条，count + 分页查询，首屏体积和内存都降了两个数量级。
-  const PAGE_SIZE = 48;
+  // 每页 48 条，count + 分页查询，首屏体积和内存都降了两个数量级。
+  // 2026-11-18：越界页（?page=999）原来是 200 空页 + 自指 canonical（软 404），
+  // Google 会当低质页收录；现在直接 404。
   const [total, products] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
@@ -105,6 +140,8 @@ export default async function CategoryDetailPage({
     }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // 越界页（含筛选后越界）一律 404，不再返回 200 空页
+  if (pageNum > totalPages) notFound();
 
   // 分页/筛选链接要保留 brand 参数
   const pageHref = (n: number) => {
@@ -112,7 +149,7 @@ export default async function CategoryDetailPage({
     if (activeBrand) qs.set("brand", activeBrand);
     if (n > 1) qs.set("page", String(n));
     const q = qs.toString();
-    return `/categories/${slug}${q ? `?${q}` : ""}`;
+    return `/categories/${encodeURIComponent(slug)}${q ? `?${q}` : ""}`;
   };
 
   return (
@@ -147,7 +184,7 @@ export default async function CategoryDetailPage({
             <p className="mb-3 text-sm font-semibold text-slate-500 uppercase tracking-wider">Filter by Brand</p>
             <div className="flex flex-wrap gap-3">
               {activeBrand && (
-                <Link href={`/categories/${slug}`}>
+                <Link href={`/categories/${encodeURIComponent(slug)}`}>
                   <Button variant="outline" size="default" className="text-sm gap-2 px-4 py-2 h-auto">
                     <X className="h-4 w-4" /> Clear
                   </Button>
@@ -156,7 +193,7 @@ export default async function CategoryDetailPage({
               {brandList.map((brand) => {
                 const isActive = brand.slug === activeBrand;
                 return (
-                  <Link key={brand.id} href={`/categories/${slug}?brand=${brand.slug}`}>
+                  <Link key={brand.id} href={`/categories/${encodeURIComponent(slug)}?brand=${encodeURIComponent(brand.slug)}`}>
                     <Button
                       variant={isActive ? "default" : "outline"}
                       size="default"
@@ -174,7 +211,7 @@ export default async function CategoryDetailPage({
         {/* 产品网格 */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((p) => (
-            <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
+            <Link key={p.sku} href={productPath(p.sku)} prefetch={false}>
               <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                 <div className="aspect-square bg-slate-50 flex items-center justify-center">
                   {Array.isArray(p.images) && p.images[0] ? (

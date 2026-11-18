@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,25 +6,61 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
 import type { Metadata } from "next";
+import { catalogCanonical } from "@/lib/catalog-url";
+import { productPath } from "@/lib/product-path";
+
+const PAGE_SIZE = 48;
+
+/** 解析 ?page=N：非法/0/负数一律回第 1 页 */
+function parsePage(raw: string | undefined): number {
+  return Math.max(1, parseInt(raw || "1", 10) || 1);
+}
+
+/** 品牌不存在时的兜底：大小写不同的 slug（如 OTIS）308 到规范地址 */
+async function redirectIfCaseVariant(
+  slug: string,
+  searchParams: { category?: string; page?: string }
+): Promise<never> {
+  if (slug !== slug.toLowerCase()) {
+    const all = await prisma.brand.findMany({ select: { slug: true } });
+    const hit = all.find((b) => b.slug.toLowerCase() === slug.toLowerCase());
+    if (hit) {
+      const qs = new URLSearchParams();
+      if (searchParams.category) qs.set("category", String(searchParams.category));
+      const pageNum = parsePage(searchParams.page);
+      if (pageNum > 1) qs.set("page", String(pageNum));
+      const q = qs.toString();
+      permanentRedirect(`/brands/${hit.slug}${q ? `?${q}` : ""}`);
+    }
+  }
+  notFound();
+}
 
 interface BrandProps {
   params: { slug: string };
   searchParams?: { category?: string; page?: string };
 }
 
-// 品牌页同样是商业落地页（"Otis elevator parts"），必须自指 canonical，
-// 并忽略 ?category= 过滤参数；但 ?page=N 要自指，否则第 2 页起的产品会被判重复内容。
+// 品牌页同样是商业落地页（"Otis elevator parts"），必须自指 canonical。
+// canonical 口径见 src/lib/catalog-url.ts：
+//   - 带 ?category= 的第 1 页 → 归一到品牌根 URL
+//   - ?page=N（含带筛选）→ 自指并保留筛选参数，否则第 2 页起的产品会被判重复内容
 export async function generateMetadata({ params, searchParams }: BrandProps): Promise<Metadata> {
   const brand = await prisma.brand.findUnique({ where: { slug: params.slug } });
   if (!brand) return { title: "Brand Not Found", robots: { index: false, follow: true } };
 
-  const pageNum = Math.max(1, parseInt(searchParams?.page || "1", 10) || 1);
-  const hasCatFilter = !!searchParams?.category;
-  const canonical = hasCatFilter || pageNum <= 1
-    ? `/brands/${brand.slug}`
-    : `/brands/${brand.slug}?page=${pageNum}`;
+  const pageNum = parsePage(searchParams?.page);
+  const catFilter = searchParams?.category ? String(searchParams.category) : "";
+  const canonical = catalogCanonical("brands", brand.slug, "category", catFilter, pageNum);
 
   const count = await prisma.product.count({ where: { brandId: brand.id } }).catch(() => 0);
+  const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
+
+  // 越界页会被页面本体 notFound()；这里不声明 canonical
+  if (pageNum > totalPages) {
+    return { title: `${brand.name} — Page Not Found`, robots: { index: false, follow: true } };
+  }
+
   const description = count > 0
     ? `${brand.name} elevator and escalator spare parts — ${count} items available. OEM and compatible components with fast worldwide shipping.`
     : `${brand.name} elevator and escalator spare parts. Fast worldwide shipping.`;
@@ -52,11 +88,11 @@ export default async function BrandDetailPage({
   params: { slug: string };
   searchParams: { category?: string; page?: string };
 }) {
+  const pageNum = parsePage(searchParams.page);
   const brand = await prisma.brand.findUnique({ where: { slug: params.slug } });
-  if (!brand) notFound();
+  if (!brand) return redirectIfCaseVariant(params.slug, searchParams);
 
   const activeCat = searchParams.category || "";
-  const pageNum = Math.max(1, parseInt(searchParams.page || "1", 10) || 1);
 
   // 该品牌下所有分类及其产品数
   const catCounts = await prisma.product.groupBy({
@@ -79,7 +115,6 @@ export default async function BrandDetailPage({
   }
 
   // 分页，理由同分类页：大品牌（如 Otis/Kone）一次全渲染会拖垮共享主机
-  const PAGE_SIZE = 48;
   const [total, products] = await Promise.all([
     prisma.product.count({ where }),
     prisma.product.findMany({
@@ -93,13 +128,15 @@ export default async function BrandDetailPage({
     }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // 越界页（含筛选后越界）一律 404，不再返回 200 空页
+  if (pageNum > totalPages) notFound();
 
   const pageHref = (n: number) => {
     const qs = new URLSearchParams();
     if (activeCat) qs.set("category", activeCat);
     if (n > 1) qs.set("page", String(n));
     const q = qs.toString();
-    return `/brands/${params.slug}${q ? `?${q}` : ""}`;
+    return `/brands/${encodeURIComponent(brand.slug)}${q ? `?${q}` : ""}`;
   };
 
   return (
@@ -108,7 +145,7 @@ export default async function BrandDetailPage({
         <div className="container mx-auto flex h-10 items-center gap-2 px-4 text-xs text-slate-400">
           <Link href="/" className="hover:text-slate-600">Home</Link>
           <span>/</span>
-          <Link href="/products?view=brands" className="hover:text-slate-600">Brands</Link>
+          <Link href="/brands" className="hover:text-slate-600">Brands</Link>
           <span>/</span>
           <span className="text-slate-600">{brand.name}</span>
         </div>
@@ -116,7 +153,7 @@ export default async function BrandDetailPage({
 
       <section className="container mx-auto px-4 py-10">
         <div className="mb-6 flex items-center gap-4">
-          <Link href="/products?view=brands" className="text-slate-400 hover:text-slate-600">
+          <Link href="/brands" className="text-slate-400 hover:text-slate-600">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <h1 className="text-2xl font-bold text-slate-800">{brand.name}</h1>
@@ -133,14 +170,14 @@ export default async function BrandDetailPage({
             <p className="mb-3 text-sm font-semibold text-slate-500 uppercase tracking-wider">Filter by Category</p>
             <div className="flex flex-wrap gap-3">
               {activeCat && (
-                <Link href={`/brands/${params.slug}`}>
+                <Link href={`/brands/${encodeURIComponent(brand.slug)}`}>
                   <Button variant="outline" size="default" className="text-sm gap-2 px-4 py-2 h-auto">
                     <X className="h-4 w-4" /> Clear
                   </Button>
                 </Link>
               )}
               {catList.map((cat: any) => (
-                <Link key={cat.id} href={`/brands/${params.slug}?category=${cat.slug}`}>
+                <Link key={cat.id} href={`/brands/${encodeURIComponent(brand.slug)}?category=${encodeURIComponent(cat.slug)}`}>
                   <Button
                     variant={cat.slug === activeCat ? "default" : "outline"}
                     size="default"
@@ -156,7 +193,7 @@ export default async function BrandDetailPage({
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.map((p) => (
-            <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
+            <Link key={p.sku} href={productPath(p.sku)} prefetch={false}>
               <Card className="h-full overflow-hidden transition-all hover:shadow-md hover:-translate-y-1">
                 <div className="aspect-square bg-slate-50 flex items-center justify-center">
                   {Array.isArray(p.images) && p.images[0] ? (

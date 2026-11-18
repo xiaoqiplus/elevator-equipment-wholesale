@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { productPath } from "@/lib/product-path";
 import type { Metadata } from "next";
 
 // 站内搜索结果页不该进索引：参数无限组合 + 内容随查询变化

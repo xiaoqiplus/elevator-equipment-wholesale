@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import ProductGallery from "@/components/ProductGallery";
+import { productPath } from "@/lib/product-path";
 import type { Metadata } from "next";
 
 export const dynamic = 'force-dynamic';
@@ -23,11 +24,8 @@ const getProduct = cache(async (sku: string) => {
   });
 });
 
-// 产品规范 URL。SKU 可能含空格等需编码字符，且 MySQL 唯一索引不区分大小写 ——
-// 小写变体也能查到记录，所以必须先把 URL 归一，否则同一个产品会有多个 200 地址。
-function productPath(sku: string): string {
-  return `/products/${encodeURIComponent(sku)}`;
-}
+// 产品规范 URL 统一走 src/lib/product-path.ts（SKU 可能含空格/斜杠等需编码字符，
+// MySQL 唯一索引不区分大小写 —— 小写变体也能查到记录，所以 URL 必须先归一）。
 
 // 相关产品：同分类的其他产品
 async function getRelatedProducts(product: any) {
@@ -56,7 +54,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://quickeaseliftparts.com";
   const description = product.description?.replace(/<[^>]*>/g, "").slice(0, 160) || `High-quality elevator component ${product.sku}`;
   return {
-    title: `${product.name} | Quick Easy Lift Parts`,
+    // 根布局 title.template 会补 "| QuickEase Lift Parts"，这里不能再带品牌后缀（否则双后缀）
+    title: product.name,
     description,
     keywords: ["elevator parts", "elevator components", product.sku, product.name, product.category?.name].filter(Boolean).join(", "),
     openGraph: {
@@ -305,7 +304,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <h2 className="mb-6 text-xl font-bold text-slate-800">Related Products</h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {relatedProducts.map((p) => (
-                <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
+                <Link key={p.sku} href={productPath(p.sku)} prefetch={false}>
                   <div className="rounded-lg border bg-white p-3 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
                     <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-slate-50">
                       {Array.isArray(p.images) && p.images[0] ? (
@@ -330,7 +329,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <h2 className="mb-6 text-xl font-bold text-slate-800">🔥 Hot Products</h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {hotProducts.map((p) => (
-                <Link key={p.sku} href={`/products/${p.sku}`} prefetch={false}>
+                <Link key={p.sku} href={productPath(p.sku)} prefetch={false}>
                   <div className="rounded-lg border bg-white p-3 text-center shadow-sm transition-all hover:shadow-md hover:-translate-y-1">
                     <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded bg-slate-50">
                       {Array.isArray(p.images) && p.images[0] ? (

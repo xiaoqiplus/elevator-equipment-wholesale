@@ -138,6 +138,44 @@ QE-O-HAA180DA2␠             （␠ = 尾随空格）
 
 > ⚠️ **已知未生效项**：`If-None-Match` → 304 **在 Hostinger 的 hcdn 后面没有生效**（线上反复实测：带上正确的 ETag 仍返回 200 + 全量正文）。应用层逻辑本身是对的（单测覆盖强/弱 ETag 两种情况都回 304），判断是边缘没把条件请求透传/承认。代码保留（边缘哪天放行就自动生效），但**不要把它算进预期收益**。真正在起作用的降负载手段是「进程内缓存 + s-maxage」这两层。
 
+### 🚨 2026-11-18 GSC 第二轮：404=129 / 重复网页=64 / 自动重定向=3（已修，待部署验证）
+
+**GSC 网页报告（响哥 11-18 截图）**：未找到（404）**129** 失败 ｜ 重复网页，用户未选定规范网页 **64** 失败 ｜ 网页会自动重定向 **3** 失败 ｜ 备用网页（有适当规范标记）23 未启动 ｜ 已发现-尚未编入索引 4 ｜ 已抓取-尚未编入索引 18。其中前三条是响哥点过「验证修正」仍失败的。
+
+**排查方法**：3 个审计员并行（爬取 + URL 变体 + 代码层），本地代理 `127.0.0.1:7897` 串行低量访问线上；Hostinger 限速很敏感（两路叠加 ~1.3 req/s 就 429，单流 1 req/s 安全）。审计产物在 `.audit/`（已 gitignore，不入库）。
+
+**归因（有证据的部分）**：
+
+| GSC 分类 | 归因 | 证据 |
+|:--|:--|:--|
+| 404 = 129 | 约 **114 条**可对号入座：**80 个旧品牌 slug** + **20 个旧分类 slug** + **4 个旧路由**（/quotation /login /register /account）+ **8 个问题 SKU**（7 个含空白 + `MP310SCE08/09`）+ 2 个已删 SKU。根因是 2026-08-02 `e77bf01` migrate-brands 把品牌并入 `other`、把 `elevator-pcb-*` 并入 `elevator-pcb`，旧 URL 集体 404 且全站没有任何 301。残差 ~15 条要 GSC 导出示例才能定名 | 旧 slug 清单来自 git 历史（prisma/seed.ts + 迁移脚本）；线上抽样 36 品牌 + 18 分类 **全部 404** |
+| 重复网页 = 64 | 当前代码里**不存在「公开 200 且无 canonical」的路由**（逐路由核对，唯一无 canonical 的 /search 有 noindex）。确定缺陷只有 `/products?view=brands` 的 canonical 指向内容不匹配的 `/products`；其余最可能是 10-27~11-10「canonical 泄漏期」被 Google 抓走的历史快照 + www 副本。**需 GSC 导出该分类示例 URL 才能逐条定性** | 代码审计 + 线上实测 |
+| 自动重定向 = 3 | `/categories` 307 → /products（跳转壳，10-27~11-10 在 sitemap 里，必占 1 条）；其余 2 条最可能是产品 SKU 大小写归一 308、Next 尾斜杠 308 | 线上实测 |
+| 备用网页 = 23 | HTTPS `www.` 全站 200 直出（不跳转、canonical 指 apex）+ 分类/品牌 `?brand=`/`?category=` 过滤视图（canonical 归一到根 URL，属正确归并） | 线上实测 6/6 www 页面 |
+| 已抓取未编入 = 18 | 产品页模板化（3794 个页面共享模板，缺描述时渲染 `—`）+ 分页越界 200 空页 | 代码 `products/[sku]:197-217`、线上 `?page=999` 实测 |
+
+**本轮改动（2026-11-18）**：
+
+1. **旧 URL 301/308 映射**（新文件 `legacy-redirects.mjs` + `next.config.mjs` 的 `redirects()`，共 127 条规则）：80 旧品牌 → `/brands` 或最接近的品牌页（如 `thyssenkrupp`→`/brands/tke`、`fujihd`→`/brands/fuji`）；20 旧分类 → `/categories/elevator-pcb` 等；4 旧路由 → `/contact`；`/index*`→`/`、`/sitemap*`→`/sitemap.xml`、`/favicon.ico`→`/favicon-32.png`；静态路由大写变体 → 小写。
+2. **www → apex 308**（`next.config.mjs` redirects 第一条，host 匹配）：整站消掉一份 200 副本，直接针对「备用网页 23」。
+3. **`/products?view=brands` → `/brands` 308**；`/brands` 页对任何 query 参数再归一一次；站内两处 `By Brand` 链接与品牌页面包屑改指 `/brands`。
+4. **产品 URL 唯一真源**：新增 `src/lib/product-path.ts`（`encodeURIComponent`），替换 6 处裸拼 `/products/${sku}`（首页热销、分类页、品牌页、搜索页、产品页相关/热销、`ProductCard`）→ 站内不再产出含裸空格的 404 链接。
+5. **sitemap 过滤加强**：`src/lib/sitemap-data.ts` 新增 `isSitemapSafeSku()`，含空白/`/`/`\`/`?`/`#`/`%` 的 SKU 一律不提交（线上最后 1 条 `%2F` 404 消失）。
+6. **分类/品牌页 canonical 口径修正**（新 `src/lib/catalog-url.ts`）：第 1 页归一，第 N 页**自指并保留筛选参数**——原实现是 `hasFilter || page<=1 ? 根URL : ?page=N`，`?brand=kone&page=2` 会丢掉 page，canonical 指向内容不一致的根页。
+7. **分页越界 404**：`?page=999` 原来是 200 空页 + 自指 canonical（软 404），现在 `notFound()`。
+8. **大小写归一**：分类/品牌/knowledge 动态段在预检查里做一次 lower-case 匹配，命中则 308 到规范地址（原来 `/brands/OTIS`、`/knowledge/<大写id>` 直接 404）。
+9. **`/categories` 改 308 单跳**（原 307 两跳）；顺带修标题双品牌后缀（`/products`、产品详情页）、`?q=` 链接编码、`.audit/` 加入 .gitignore，并修好 6 条既有失败的 `homepage.test.tsx`（现在 `vitest run` **50/50 全绿**）。
+
+**本地验证（2026-11-18）**：`tsc --noEmit` ✅ 0 错；`vitest run` ✅ **50/50**（含新增 10 条路径/canonical + 11 条重定向规则回归）；`npm run build` ✅ 27s、BUILD_ID 正常。本地 `next start -p 3100` 实测 16 条跳转规则全部命中（www→apex 308、/categories 308→/products、/brands/siemens 308→/brands、/brands/thyssenkrupp 308→/brands/tke、/products?view=brands 308→/brands、大写变体 308 等）。
+
+**部署后待做**：
+
+1. 线上跑 `/api/health` 确认 buildId 变化；抽查 20 条旧 URL（品牌/分类/路由）确认 308 且目标 200。
+2. GSC：重新提交 sitemap.xml；对「未找到」「网页会自动重定向」点「验证修正」。**GSC 数据有滞后，1~3 周内才会收敛**。
+3. **数据清理（唯一根治 8 个 SKU 的办法）**：后台把 7 个含空白 SKU + `MP310SCE08/09` 改成 URL 安全写法（`-`），改完自动回到 sitemap 且详情页可达。清单见下方「7 个不可达 SKU」。
+4. **64 条「重复网页」需要 GSC 导出**：在 GSC 该分类里点「示例」→ 右上角「导出」CSV，把 URL 列表给我，才能逐条定性（历史快照 vs www vs 参数视图）。
+5. 可选 P1（收益大，需拍板）：把访问记录移出渲染路径（`layout.tsx:113-118` 的 `recordVisit`），让页面恢复静态/ISR 能力——这是「已发现/已抓取未编入索引」的结构性解法，但会改变访问统计口径。
+
 
 
 ### ✅ 后台认证已加固（2026-10-27 15:32 修复，上一版此处是「待处理」）

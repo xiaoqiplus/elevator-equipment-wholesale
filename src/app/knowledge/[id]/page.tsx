@@ -1,11 +1,21 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 
 interface Props { params: { id: string } }
+
+/** 文章 id 是 cuid（全小写）。大写变体（外链/邮件里常见）308 到规范地址，不直接 404。 */
+async function redirectIfCaseVariant(id: string): Promise<never> {
+  if (id !== id.toLowerCase()) {
+    const all = await prisma.knowledge.findMany({ select: { id: true } });
+    const hit = all.find((k) => k.id.toLowerCase() === id.toLowerCase());
+    if (hit) permanentRedirect(`/knowledge/${hit.id}`);
+  }
+  notFound();
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = await prisma.knowledge.findUnique({ where: { id: params.id } });
@@ -29,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function KnowledgeDetailPage({ params }: Props) {
   const post = await prisma.knowledge.findUnique({ where: { id: params.id } });
-  if (!post) notFound();
+  if (!post) return redirectIfCaseVariant(params.id);
 
   return (
     <div>

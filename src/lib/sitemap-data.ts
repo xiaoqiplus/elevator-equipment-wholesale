@@ -32,6 +32,14 @@ export function __resetSitemapMemo() {
   memo = null;
 }
 
+// sitemap 只接受「拼成 URL 后还能被路由解析」的 SKU。
+// 空白字符（7 个）与 `/`（1 个：MP310SCE08/09）实测编码后仍 404，
+// 提交进 sitemap 只会让 Google 收到 404、拉低 sitemap 信用（2026-11-18 实测）。
+// 根治是后台把 SKU 改成 URL 安全写法，改完自动回到本表。
+export function isSitemapSafeSku(sku: string): boolean {
+  return !/[\/\\?#%\s]/.test(sku);
+}
+
 export async function buildSitemapEntries(): Promise<SitemapEntry[]> {
   if (memo && Date.now() - memo.at < MEMO_TTL_MS) return memo.data;
 
@@ -58,16 +66,10 @@ export async function buildSitemapEntries(): Promise<SitemapEntry[]> {
       take: 5000,
     });
     productPages = products
-      // 跳过含空白字符的 SKU（2026-11-10 线上实测共 7 个：
-      // "Thyssen 3800700010"、"Schindler 50659077"、"ELELATOR DRIVE GBA21310JC1"、
-      // "QE-BUTTON-KONE   KM863050G069H092"、"QE-K-KM611085H01 "、"QE-K- KM470560G01"、
-      // "QE-O-HAA180DA2 "）。
-      // 这类 SKU 的详情页无论怎么编码（%20 / 尾随空格 / NBSP / 全角空格）都 404，
-      // 提交进 sitemap 只会让 Google 收到一堆 404，拉低 sitemap 信用。
-      // 正解是把这 7 个 SKU 在后台改成 URL 安全写法，改完自动回到本表。
-      .filter((product) => !/\s/.test(product.sku))
+      // 只保留能拼成可用 URL 的 SKU（空白 7 个 + 含 `/` 的 MP310SCE08/09 实测都 404，
+      // 规则见上方 isSitemapSafeSku）。根治仍是后台改数据。
+      .filter((product) => isSitemapSafeSku(product.sku))
       .map((product) => ({
-        // 其余 SKU 仍做编码兜底（竞品导入的数据可能含保留字符）
         url: `${BASE_URL}/products/${encodeURIComponent(product.sku)}`,
         lastModified: product.updatedAt,
         changeFrequency: "weekly" as const,

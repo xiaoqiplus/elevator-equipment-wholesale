@@ -1,3 +1,5 @@
+import { buildLegacyRedirects } from "./legacy-redirects.mjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // geoip-lite 数据文件（data/*.dat）无法被 webpack 打包，保持外部 require，
@@ -33,6 +35,13 @@ const nextConfig = {
         hostname: "*.quickeaseliftparts.com",
       },
     ],
+  },
+
+  // ── 旧 URL 301/308 归一（2026-11-18，GSC「未找到 404=129」的修复）───────
+  // 规则清单与原因见根目录 legacy-redirects.mjs 的头注释。
+  // 顺序敏感：www→apex 必须最先，其次是查询参数规则，最后是具体 slug。
+  async redirects() {
+    return buildLegacyRedirects();
   },
 
   // ── Secure Headers ─────────────────────────────────────────────────────
