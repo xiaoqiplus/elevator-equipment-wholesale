@@ -12,8 +12,8 @@
 | 形态 | 网站（Next.js） |
 | 技术栈 | Next.js 14 · React 18 · Prisma · MySQL · Tailwind |
 | 运行环境 | Hostinger 共享主机；域名 Namesilo；Node |
-| 当前状态 | **运营中；2026-11-18 修 GSC 第二轮（404=129/重复=64/重定向=3）：加 127 条旧 URL 308 映射、www→apex、产品 URL 编码、分页 canonical、sitemap 过滤；本地 50/50 测试 + build 通过，待部署验证** |
-| 最后改动 | 2026-11-18（GSC 索引修复：旧 URL 301/308、www 归一、canonical 口径、分页越界 404） |
+| 当前状态 | **运营中；2026-11-18 GSC 第二轮修复已上线（buildId `OLwxvrsv8oMGtHyciNm5E`）：旧 URL 308 映射 113 条、www→apex、产品 URL 编码、分页 canonical、sitemap 3863 条无 404；52/52 测试通过。首版曾误加大小写规则导致 11 分钟全站重定向环，已 hotfix** |
+| 最后改动 | 2026-11-18（GSC 索引修复 + 重定向环 hotfix） |
 | 规模 | 12771 个文件 / 641.7 MB（不含 .git、node_modules、dist、build 等） |
 | 文档 | 根目录 4 份 md；主文档：`STATE.md` |
 | 协作元数据 | CLAUDE.md ✅ ｜ 共享进度 ✅ ｜ 署名台账 ✅ |
@@ -79,9 +79,10 @@ elevator-website/
 
 **2026-11-18 GSC 第二轮（404=129 / 重复网页=64 / 自动重定向=3）**：
 - **404 主因**：2026-08-02 `e77bf01` migrate-brands 把 ~80 个品牌并入 `other`、16 个 `elevator-pcb-*` 并入 `elevator-pcb`，旧 URL 无任何 301 → 80 旧品牌 + 20 旧分类 + 4 旧路由 + 8 问题 SKU ≈ 114 条实锤。
-- **改动**：新增 `legacy-redirects.mjs`（127 条 308 映射，含 www→apex）；`/products?view=brands`→`/brands`；新增 `src/lib/product-path.ts` 统一产品 URL 编码（替换 6 处裸拼）；`src/lib/catalog-url.ts` 修正分页 canonical（第 N 页自指且保留筛选参数）；分页越界改 404；sitemap 过滤空白/斜杠 SKU；分类/品牌/knowledge 大写 slug 308 归一；`/categories` 改单跳。
-- **本地验证**：`tsc` 0 错、`vitest` **50/50**、`npm run build` 通过；本地 `next start` 实测 16 条跳转规则全部命中。
-- **待办**：部署后复验 + GSC 重新提交 sitemap/验证修正；后台改名 8 个问题 SKU（唯一根治）；64 条「重复网页」需 GSC 导出示例 URL 才能逐条定性。详见 `STATE.md` 同名小节。
+- **改动**：新增 `legacy-redirects.mjs`（113 条 308 映射，含 www→apex）；`/products?view=brands`→`/brands`；新增 `src/lib/product-path.ts` 统一产品 URL 编码（替换 6 处裸拼）；`src/lib/catalog-url.ts` 修正分页 canonical（第 N 页自指且保留筛选参数）；分页越界改 404；sitemap 过滤空白/斜杠 SKU；分类/品牌/knowledge 大写 slug 308 归一；`/categories` 改单跳。
+- **上线过程**：19:02 首版（buildId `1q17KIj9…`）因 Next redirects 大小写不敏感匹配，误加的大写规则让小写路径自我 308 → 全站 11 分钟重定向环；19:13 hotfix 上线（buildId `OLwxvrsv8oMGtHyciNm5E`），删掉大写规则并加 3 条回归测试锁死。
+- **验证**：`tsc` 0 错、`vitest` 52/52、`npm run build` 通过；线上复验：/products /about /brands /knowledge 200、/categories 308→/products、/brands/thyssenkrupp 308→/brands/tke、?brand=kone&page=2 canonical 含 brand&page、?page=999 → 404、sitemap 3863 条无 %2F。
+- **待办**：GSC 重新提交 sitemap/验证修正（1~3 周收敛）；后台改名 8 个问题 SKU（唯一根治）；64 条「重复网页」需 GSC 导出示例 URL 才能逐条定性。详见 `STATE.md` 同名小节。
 
 主文档：[`STATE.md`](STATE.md)
 
