@@ -80,9 +80,32 @@ describe("关键规则", () => {
     expect(bySource.get("/index.html").destination).toBe("/");
   });
 
-  it("静态路由的大写变体 308 到小写", () => {
-    expect(bySource.get("/Products").destination).toBe("/products");
-    expect(bySource.get("/Brands").destination).toBe("/brands");
-    expect(bySource.get("/Knowledge").destination).toBe("/knowledge");
+  // ── 2026-11-18 线上事故回归 ─────────────────────────────────────────────
+  // Next 的 redirects source 匹配是大小写不敏感的。曾经加了 `/Products → /products`
+  // 这类「大写变体归一」，结果小写的 /products 也被匹配，destination 又等于自己
+  // → 全站除首页外 308 死循环（线上真实发生，buildId 1q17KIj9…）。
+  it("所有 source 必须是全小写（大写 source 会大小写不敏感命中并造成自我跳转）", () => {
+    for (const r of rules) {
+      expect(r.source, `source must be lowercase: ${r.source}`).toBe(r.source.toLowerCase());
+    }
+  });
+
+  it("没有任何规则的 destination 与 source 相同（防自我 308 死循环）", () => {
+    for (const r of rules) {
+      expect(r.destination, `self redirect: ${r.source}`).not.toBe(r.source);
+    }
+  });
+
+  it("小写静态路由不能被任何规则拦截（/products、/about 等必须直出）", () => {
+    const lowerStatics = ["/products", "/brands", "/about", "/knowledge", "/contact", "/search", "/categories"];
+    for (const path of lowerStatics) {
+      const direct = rules.filter(
+        (r) => !r.has && (r.source === path || r.source === `${path}/`)
+      );
+      // 只有 /categories 是已知的跳转壳（→ /products），其余必须是真实页面
+      if (path !== "/categories") {
+        expect(direct, `${path} should not be redirected`).toHaveLength(0);
+      }
+    }
   });
 });

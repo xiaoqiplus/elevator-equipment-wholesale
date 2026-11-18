@@ -146,7 +146,17 @@ const LEGACY_CATEGORY_REDIRECTS = {
   siemens: "/brands",
 };
 
-/** 旧路由 / 爬虫探测路径 */
+/**
+ * 旧路由 / 爬虫探测路径
+ *
+ * ⚠️ 2026-11-18 教训：**不要再给静态路由加大写变体的 redirects()**。
+ * Next 的 redirects source 匹配是**大小写不敏感**的（path-to-regexp 默认
+ * sensitive:false），所以 `/Products → /products` 这类规则会把小写的
+ * `/products` 也匹配上，destination 又等于请求路径 → 变成自我 308 死循环
+ * （线上实测 `/products` 一旦上线就 308 到自己，浏览器 ERR_TOO_MANY_REDIRECTS）。
+ * 大写静态路径的 404 只有极少数手输/旧外链，放弃归一；动态段的大小写归一
+ * 放在页面里做（categories/brands/knowledge 的 redirectIfCaseVariant）。
+ */
 const LEGACY_ROUTE_REDIRECTS = {
   "/quotation": "/contact",
   "/login": "/contact",
@@ -159,16 +169,9 @@ const LEGACY_ROUTE_REDIRECTS = {
   "/favicon.ico": "/favicon-32.png",
 };
 
-/** 静态路由的大写变体（Next 路径区分大小写，大写直接 404） */
-const STATIC_CASE_REDIRECTS = {
-  "/Products": "/products",
-  "/Brands": "/brands",
-  "/About": "/about",
-  "/Knowledge": "/knowledge",
-  "/Contact": "/contact",
-  "/Search": "/search",
-  "/Categories": "/products",
-};
+/** 静态路由大写变体：**故意留空**，原因见上方 LEGACY_ROUTE_REDIRECTS 的注释。
+ * 保留这个常量只是为了让「为什么不加」有据可查。 */
+const STATIC_CASE_REDIRECTS = {};
 
 export function buildLegacyRedirects() {
   /** @type {{source:string,destination:string,permanent:boolean,has?:any[]}[]} */
